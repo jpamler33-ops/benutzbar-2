@@ -1,0 +1,42 @@
+'use strict';
+const assert=require('node:assert/strict');
+const geo=require('../coast-geo.js');
+
+const north=geo.destination(44.12,15.23,0,1000);
+assert(north.lat>44.12);
+assert(Math.abs(north.lon-15.23)<.00001);
+const east=geo.destination(0,0,90,1000);
+assert(Math.abs(east.lon-.008993)<.00005);
+assert.throws(()=>geo.depthUrl(91,0,0,500));
+assert.throws(()=>geo.depthUrl(44,12,720,500));
+assert.throws(()=>geo.depthUrl(44,12,90,100000));
+const url=new URL(geo.depthUrl(44.12,15.23,45,500));
+assert(url.searchParams.get('geom').startsWith('LINESTRING(15.230000 44.120000,'));
+const p=geo.parseProfile([4,7,null,11,18,21],500);
+assert.equal(p.count,5);
+assert.equal(p.complete,true);
+assert.equal(p.delta,17);
+assert.equal(geo.parseProfile([null,1,2],500).complete,false);
+assert.throws(()=>geo.parseProfile({values:[1,2,3]},500));
+const wms=new URL(geo.habitatUrl({s:43.5,w:16.4,n:43.6,e:16.5},800,700));
+assert.equal(wms.searchParams.get('layers'),'eusm2025_subs_400');
+assert.equal(wms.searchParams.get('bbox'),'43.500000,16.400000,43.600000,16.500000');
+assert.equal(wms.searchParams.get('width'),'512');
+assert.equal(wms.searchParams.get('height'),'512');
+const nearest=geo.nearestModelHour([{time:'2026-11-01T13:00'},{time:'2026-11-01T14:00'}],'FR',new Date('2026-11-01T12:40:00Z'));
+assert.equal(nearest.time,'2026-11-01T14:00');
+assert.equal(geo.nearestModelHour([], 'HR'),null);
+(async()=>{
+  let requests=0;
+  global.fetch=async(_url,{signal})=>{
+    requests++;
+    assert(signal);
+    return {ok:true,json:async()=>[1,2,3,4,5,6,7]};
+  };
+  const first=await geo.fetchDepth(44.12,15.23,90,500);
+  const second=await geo.fetchDepth(44.12,15.23,90,500);
+  assert(first.complete);
+  assert(second.cached);
+  assert.equal(requests,1);
+  console.log('GEO_REGRESSION_OK');
+})().catch(e=>{console.error(e);process.exit(1)});
