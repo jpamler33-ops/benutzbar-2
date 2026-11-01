@@ -27,5 +27,6 @@ def probe(name,url,marker,critical):
         print(f'{"FAIL" if critical else "WARN"}: {name}: {type(exc).__name__}: {str(exc)[:140]}')
         return not critical
 if __name__=='__main__':
-    if not all(probe(*entry) for entry in PROBES):
+    results = [probe(*entry) for entry in PROBES]
+    if not all(results):
         raise SystemExit('Critical live-site probe failed. Inspect Pages deployment.')
