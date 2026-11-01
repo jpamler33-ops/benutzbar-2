@@ -1,36 +1,103 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-11-01T19:02:25.111663Z",
   "sources": [
     {
       "id": "barsch_alarm",
       "name": "Barsch-Alarm Forum",
       "homepage": "https://www.barsch-alarm.de/community/",
       "enabled": true,
-      "last_check": null
+      "last_check": {
+        "checked_at": "2026-11-01T19:02:19.175612Z",
+        "status": "ok",
+        "fetched": 0,
+        "stored": 0,
+        "message": ""
+      }
     },
     {
       "id": "anglerboard",
       "name": "Anglerboard Forum",
       "homepage": "https://www.anglerboard.de/",
       "enabled": true,
-      "last_check": null
+      "last_check": {
+        "checked_at": "2026-11-01T19:02:20.652181Z",
+        "status": "ok",
+        "fetched": 0,
+        "stored": 0,
+        "message": ""
+      }
     },
     {
       "id": "gobages",
       "name": "Gobages Forum (France)",
       "homepage": "https://forum.gobages.com/",
       "enabled": true,
-      "last_check": null
+      "last_check": {
+        "checked_at": "2026-11-01T19:02:21.933456Z",
+        "status": "ok",
+        "fetched": 2,
+        "stored": 2,
+        "message": ""
+      }
     },
     {
       "id": "morski_ribolov",
       "name": "Morski Ribolov (Hrvatska)",
       "homepage": "https://morski-ribolov.net/",
       "enabled": true,
-      "last_check": null
+      "last_check": {
+        "checked_at": "2026-11-01T19:02:23.495844Z",
+        "status": "error",
+        "fetched": 0,
+        "stored": 0,
+        "message": "ValueError: Feed ist kein gültiges XML"
+      }
     }
   ],
-  "articles": [],
-  "scope": "Nur ausdrücklich konfigurierte öffentliche RSS-Feeds, keine flächendeckende Forensuche.",
-  "data_type": "Quellenhinweise, keine überprüften Fänge"
+  "articles": [
+    {
+      "id": "4805589fb7f66d5fe535519b",
+      "source_id": "gobages",
+      "url": "https://forum.gobages.com/t/vendues-3-cannes-winston-lt-3-5-et-6-avec-tube-de-transport-toile/41172",
+      "title": "VENDUES 3 cannes Winston LT 3 5 et 6 avec tube de transport toilé",
+      "excerpt": "Je me sépare de trois cannes Winston LT 5 piece: 3wt 8’9\", 5wt 8’9\" 6wt 9’, avec leurs tubes et sacs d’origine, et un tube de transport toilé Winston spécial pour ces cannes. On peut y mettre jusqu’à 4 cannes, sans leur",
+      "published_at": "2026-10-22T08:46:30Z",
+      "first_seen": "2026-11-01T19:02:23.493931Z",
+      "last_seen": "2026-11-01T19:02:23.493931Z",
+      "countries": [
+        "FR"
+      ],
+      "regions": [
+        "riviera"
+      ],
+      "fish": [],
+      "themes": [],
+      "publication_season": "Herbst",
+      "relevance": 65,
+      "evidence": "Erwähnung im Feed – nicht verifiziert"
+    },
+    {
+      "id": "b44387cd3d10f696e77632b4",
+      "source_id": "gobages",
+      "url": "https://forum.gobages.com/t/comment-se-procurer-un-blank-alveole-d-occasion-pour-restaurer-a-son-idee/41171",
+      "title": "Comment se procurer un blank alvéole d’occasion pour restaurer à son idée",
+      "excerpt": "J’adore remettre au gout du jour des vieilles cannes en bambou de valeur modifier leur action pour les rendre efficace…mais je ne trouve pas de blanks alveoles car tres rare pour des cannes anciennes…en desespoir de caus",
+      "published_at": "2026-10-22T07:26:20Z",
+      "first_seen": "2026-11-01T19:02:23.493931Z",
+      "last_seen": "2026-11-01T19:02:23.493931Z",
+      "countries": [
+        "FR"
+      ],
+      "regions": [
+        "riviera"
+      ],
+      "fish": [],
+      "themes": [],
+      "publication_season": "Herbst",
+      "relevance": 65,
+      "evidence": "Erwähnung im Feed – nicht verifiziert"
+    }
+  ],
+  "scope": "Nur konfigurierte und robots.txt-zugelassene RSS-Feeds; keine flächendeckende Forensuche.",
+  "data_type": "Unbestätigte Quellenhinweise, keine tatsächlichen Fänge"
 }
