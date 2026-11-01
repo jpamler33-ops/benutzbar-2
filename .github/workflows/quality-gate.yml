@@ -1,0 +1,52 @@
+name: COASTFINDER Quality & Free Source Monitor
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'feed/**'
+      - 'scripts/**'
+      - '.github/workflows/quality-gate.yml'
+  pull_request:
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'feed/**'
+      - 'scripts/**'
+      - '.github/workflows/quality-gate.yml'
+  schedule:
+    - cron: '43 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: coastfinder-quality-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: JavaScript syntax
+        run: |
+          for script in *.js; do node --check "$script"; done
+      - name: Python syntax
+        run: python -m compileall -q scripts
+      - name: Static app, PWA and public feed security
+        run: python scripts/quality_gate.py
+      - name: Daily live website and weather source probes
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python scripts/live_probe.py
