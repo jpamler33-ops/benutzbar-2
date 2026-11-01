@@ -8,6 +8,7 @@ on:
       - '*.css'
       - 'feed/**'
       - 'scripts/**'
+      - 'tests/**'
       - '.github/workflows/quality-gate.yml'
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - '*.css'
       - 'feed/**'
       - 'scripts/**'
+      - 'tests/**'
       - '.github/workflows/quality-gate.yml'
   schedule:
     - cron: '43 6 * * *'
@@ -45,6 +47,8 @@ jobs:
           for script in *.js; do node --check "$script"; done
       - name: Python syntax
         run: python -m compileall -q scripts
+      - name: RSS precision and regression tests
+        run: python -m unittest discover -s tests -v
       - name: Static app, PWA and public feed security
         run: python scripts/quality_gate.py
       - name: Daily live website and weather source probes
