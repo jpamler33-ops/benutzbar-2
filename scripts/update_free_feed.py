@@ -2,6 +2,7 @@
 No personal catch records, no broad scraping, no forum fulltext pages.
 """
 import datetime as dt
+from urllib.parse import urlsplit
 import json
 from pathlib import Path
 import tempfile
@@ -10,6 +11,34 @@ import radar
 BASE=Path(__file__).resolve().parent.parent
 OUT=BASE/'feed'/'radar.json'
 SOURCES=BASE/'scripts'/'sources.json'
+
+
+def revalidate_previous(rows, sources):
+    """Recheck cached articles so old false positives cannot survive every refresh."""
+    approved = {s['id']:urlsplit(s['feed_url']).hostname.lower().removeprefix('www.')
+                for s in sources if s.get('enabled')}
+    kept = []
+    for item in rows:
+        if not isinstance(item, dict) or not isinstance(item.get('id'), str):
+            continue
+        source_id = item.get('source_id')
+        if source_id not in approved:
+            continue
+        try:
+            url = urlsplit(item.get('url') or '')
+        except (ValueError, TypeError):
+            continue
+        if url.scheme != 'https' or url.username or url.password or \
+                (url.hostname or '').lower().removeprefix('www.') != approved[source_id]:
+            continue
+        title, excerpt = item.get('title'), item.get('excerpt')
+        if not isinstance(title, str) or not isinstance(excerpt, str):
+            continue
+        tags = radar.classify(title, excerpt, item.get('published_at'))
+        if not tags['relevant']:
+            continue
+        kept.append({**item, **{k:v for k,v in tags.items() if k != 'relevant'}})
+    return kept
 
 def update():
     sources=radar.load_sources(SOURCES)
@@ -27,13 +56,14 @@ def update():
             statuses=radar.get_status(db,sources=sources)['sources']
         finally: db.close()
     # Only keep validated, normalized source rows and public non-sensitive metadata.
-    merged={p['id']:p for p in prev if isinstance(p,dict) and isinstance(p.get('id'),str) and isinstance(p.get('url'),str)}
+    validated=revalidate_previous(prev,sources)
+    merged={p['id']:p for p in validated}
     for p in new: merged[p['id']]=p
     # Bounded public dataset; do not publish private catches, tokens or per-user coordinates.
     ordered=sorted(merged.values(),key=lambda p:p.get('published_at') or p.get('first_seen') or '',reverse=True)[:400]
     public_fields={'id','source_id','url','title','excerpt','published_at','first_seen','last_seen','regions','countries','fish','themes','publication_season','relevance','evidence'}
     articles=[{k:v for k,v in p.items() if k in public_fields} for p in ordered]
-    result={'updated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),
+    result={'discarded_old_entries':len(prev)-len(validated), 'updated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),
             'sources':statuses,'articles':articles,
             'scope':'Nur konfigurierte und robots.txt-zugelassene RSS-Feeds; keine flächendeckende Forensuche.',
             'data_type':'Unbestätigte Quellenhinweise, keine tatsächlichen Fänge'}

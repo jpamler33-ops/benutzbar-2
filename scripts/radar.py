@@ -115,19 +115,87 @@ def matches(text: str, word: str) -> bool:
     return bool(re.search(r'(?<!\w)' + re.escape(word) + r'(?!\w)', text, flags=re.I))
 
 
+# Geographic names which are also ordinary words need unambiguous evidence.
+# French "cannes" means fishing rods, not necessarily the city Cannes.
+AMBIGUOUS_PLACES = {
+    'riviera': {'cannes', 'nice', 'var'},
+    'split': {'vis'},
+    'zadar': {'vir'},
+}
+GEOGRAPHIC_CONTEXT = {
+    'cannes': r"(?:\b(?:à|de|près de|au large de|port de|baie de|plage de)\s+cannes\b|\bcannes\s*\(06\))",
+    'nice': r"(?:\b(?:à|de|près de|au large de|port de|baie de|plage de)\s+nice\b|\bnice\s*\(06\))",
+    'var': r"(?:\b(?:département du|côtes? du)\s+var\b|\bcôte varoise\b|\bvar\s*\(83\))",
+    'vis': r"(?:\b(?:otok|island of|île de|insel|na otoku)\s+vis\b|\bvis\s*\(croati[ae]\))",
+    'vir': r"(?:\b(?:otok|island of|île de|insel|na otoku)\s+vir\b|\bvir\s*\(croati[ae]\))",
+}
+# Context indicates discussion, not a verified catch or a fish population.
+FISHING_CONTEXT = (
+    'angel', 'angeln', 'angler', 'fishing', 'pêche', 'peche', 'pêcher', 'pecher',
+    'ribolov', 'ribolova', 'pecanje', 'pecati', 'caught', 'catch', 'gefangen',
+    'fangen', 'fangbericht', 'ulov', 'ulovljen', 'ulovljena', 'prise', 'pris',
+    'surfcasting', 'rockfishing', 'shore jigging', 'spinnfischen', 'spinning',
+    'poisson', 'poissons', 'fische', 'fisch',
+)
+CATCH_CONTEXT = ('caught', 'gefangen', 'fangbericht', 'ulov', 'ulovljen', 'ulovljena', 'pris', 'prise')
+AD_HEADLINE = re.compile(
+    r"\b(?:vendues?|vends|vendre|vente|à vendre|a vendre|occasion|"
+    r"verkaufe|verkauf|verkaufen|for sale|selling|wanted|suche zu kaufen|"
+    r"wtb|wts|sold|à céder|a ceder)\b", re.I
+)
+GEAR_HEADLINE = re.compile(
+    r"\b(?:cannes?|moulinets?|blanks?|rouleaux|rods?|reels?|"
+    r"tackle|fishing gear|angelrute[n]?|rollen|test de matériel|"
+    r"réparation|reparation|restaurer)\b", re.I
+)
+
+
+def _regions(text: str) -> list[str]:
+    result = []
+    for region, (_, terms) in REGIONS.items():
+        ambiguous = AMBIGUOUS_PLACES.get(region, set())
+        if any(matches(text, term) for term in terms if term not in ambiguous):
+            result.append(region)
+        elif any(re.search(GEOGRAPHIC_CONTEXT[name], text, flags=re.I) for name in ambiguous):
+            result.append(region)
+    return result
+
+
 def classify(title: str, excerpt: str, published: str | None):
-    text = f'{title} {excerpt}'.lower()
-    regions = [k for k, (country, terms) in REGIONS.items() if any(matches(text,t) for t in terms)]
-    countries = sorted({REGIONS[r][0] for r in regions} | {c for c, words in COUNTRY_TERMS.items() if any(matches(text, w) for w in words)})
-    fish = [k for k, terms in FISH.items() if any(matches(text,t) for t in terms)]
-    themes = [k for k, terms in THEMES.items() if any(matches(text,t) for t in terms)]
-    is_coast = any(term in text for term in COAST_TERMS) or bool(regions)
-    score = min(100, (30 if regions else 0)+(15 if countries else 0)+(20 if is_coast else 0)+(12 if fish else 0)+(12 if themes else 0)+(11 if len(regions)>0 and len(themes)>1 else 0))
-    is_relevant = bool(countries and is_coast and (fish or themes)) or bool(regions and (is_coast or fish))
-    # Publication date != catch date; it is only a temporal property of the source.
-    month = int(published[5:7]) if published and re.match(r'^\d{4}-\d{2}', published) else None
-    season = ('Winter' if month in (12,1,2) else 'Frühling' if month in (3,4,5) else 'Sommer' if month in (6,7,8) else 'Herbst') if month else None
-    return {'regions':regions,'countries':countries,'fish':fish,'themes':themes,'relevance':score,'relevant':is_relevant,'publication_season':season}
+    # Word boundaries prevent "mer" matching fragments of unrelated words.
+    content = f'{title} {excerpt}'.lower()
+    regions = _regions(content)
+    countries = sorted({REGIONS[r][0] for r in regions} |
+                       {country for country, words in COUNTRY_TERMS.items()
+                        if any(matches(content, word) for word in words)})
+    fish = [name for name, terms in FISH.items()
+            if any(matches(content, term) for term in terms)]
+    themes = [name for name, terms in THEMES.items()
+              if any(matches(content, term) for term in terms)]
+    coastal_context = any(matches(content, word) for word in COAST_TERMS)
+    fishing_context = bool(fish) or any(matches(content, word) for word in FISHING_CONTEXT)
+    catch_context = any(matches(content, word) for word in CATCH_CONTEXT)
+    ad = bool(AD_HEADLINE.search(title))
+    hardware = bool(GEAR_HEADLINE.search(title)) and not catch_context and \
+               not re.search(GEOGRAPHIC_CONTEXT['cannes'], title, flags=re.I)
+    # Prefer precision over recall. Region and maritime context are mandatory,
+    # unless a geo-located catch names a recognizable fish species.
+    relevant = bool(regions and fishing_context and
+                    (coastal_context or (fish and catch_context)) and
+                    not ad and not hardware)
+    score = (30 if regions else 0) + (15 if countries else 0) + \
+            (20 if coastal_context else 0) + (12 if fish else 0) + \
+            (12 if themes else 0) + (11 if catch_context else 0)
+    score = min(100, score) if relevant else 0
+    month = int(published[5:7]) if isinstance(published, str) and re.match(r'^\d{4}-\d{2}', published) else None
+    if month not in range(1, 13):
+        month = None
+    season = ('Winter' if month in (12, 1, 2) else
+              'Frühling' if month in (3, 4, 5) else
+              'Sommer' if month in (6, 7, 8) else 'Herbst') if month else None
+    return {'regions': regions, 'countries': countries, 'fish': fish,
+            'themes': themes, 'relevance': score, 'relevant': relevant,
+            'publication_season': season}
 
 
 def iso_date(value: str | None) -> str | None:
