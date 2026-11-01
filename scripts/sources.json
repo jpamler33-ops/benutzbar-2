@@ -1,0 +1,38 @@
+[
+  {
+    "id": "barsch_alarm",
+    "name": "Barsch-Alarm Forum",
+    "feed_url": "https://www.barsch-alarm.de/community/forums/-/index.rss",
+    "homepage": "https://www.barsch-alarm.de/community/",
+    "type": "rss",
+    "enabled": true,
+    "notes": "XenForo RSS; weiter nach Küstenbezug filtern."
+  },
+  {
+    "id": "anglerboard",
+    "name": "Anglerboard Forum",
+    "feed_url": "https://www.anglerboard.de/forums/-/index.rss",
+    "homepage": "https://www.anglerboard.de/",
+    "type": "rss",
+    "enabled": true,
+    "notes": "XenForo RSS; Suchbegriffe werden lokal zugeordnet."
+  },
+  {
+    "id": "gobages",
+    "name": "Gobages Forum (France)",
+    "feed_url": "https://forum.gobages.com/latest.rss?order=created",
+    "homepage": "https://forum.gobages.com/",
+    "type": "rss",
+    "enabled": true,
+    "notes": "Discourse-Standardfeed; Verfügbarkeit wird beim Abruf geprüft."
+  },
+  {
+    "id": "morski_ribolov",
+    "name": "Morski Ribolov (Hrvatska)",
+    "feed_url": "https://morski-ribolov.net/feed/",
+    "homepage": "https://morski-ribolov.net/",
+    "type": "rss",
+    "enabled": true,
+    "notes": "RSS-Endpunkt nicht live bestätigt, Fehler werden sichtbar protokolliert."
+  }
+]

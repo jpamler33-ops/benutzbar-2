@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081521">
+<meta name="description" content="COASTFINDER — entdecke Küstenstrukturen und potenzielle Angelstellen mit echten Kartendaten in Frankreich und Kroatien.">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="COASTFINDER"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>COASTFINDER · Küsten-Angelspots entdecken</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-180.png"><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+ <header class="topbar">
+  <div class="logo"><div class="logo-mark">⌖</div><div><div class="brand">COAST<span>FINDER</span></div><div class="brand-sub">COASTAL INTELLIGENCE <i></i> FREE</div></div></div>
+  <div class="top-actions"><span class="online-status" id="online-status"><span class="status-dot"></span>LIVE MAP</span><button id="help-btn" class="round-button" title="Hinweise">ⓘ</button></div>
+ </header>
+ <div class="regions-bar"><div class="regions-label">REGION</div><div id="region-tabs" class="region-tabs"></div></div>
+ <section id="stage" class="stage" aria-label="Interaktive Küstenkarte">
+  <div id="map" class="map" tabindex="0" role="application" aria-label="Karte: Ziehen zum Bewegen, Mausrad oder Plus Minus zum Zoomen">
+   <div id="tiles" class="tiles" aria-hidden="true"></div>
+   <img id="bathy" class="bathy" aria-label="EMODnet Tiefenkarte" alt="" draggable="false" hidden>
+   <div id="markers" class="markers" aria-label="Kartenmarkierungen"></div>
+   <div id="map-overlay" class="map-overlay"></div>
+  </div>
+  <div class="map-top-left"><div class="map-chip"><span class="chip-pulse"></span> <span id="map-region">ISTRIEN, KROATIEN</span></div><div class="zoom-indicator" id="zoom-info">ZOOM 12 · OSM</div></div>
+  <div class="map-tool-stack">
+   <button class="map-btn" id="zoom-plus" aria-label="Heranzoomen" title="Heranzoomen">+</button><button class="map-btn" id="zoom-minus" aria-label="Herauszoomen" title="Herauszoomen">−</button>
+   <div class="tool-divider"></div>
+   <button class="map-btn" id="locate" aria-label="Mein Standort" title="Standort">◎</button>
+   <button class="map-btn" id="pin-btn" aria-label="Eigenen Pin setzen" title="Eigenen Pin setzen">⌖</button>
+  </div>
+  <div class="map-layers"><button id="bathy-btn" class="layer-btn" aria-pressed="false"><span class="layer-icon">≋</span> Tiefenkarte <span class="switch" id="bathy-switch"></span></button></div>
+  <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende <span id="bathy-attribution" hidden> · EMODnet Bathymetry</span></div>
+  <div class="map-banner" id="map-banner" hidden></div>
+ </section>
+ <section class="drawer" id="drawer" aria-label="Ergebnisse und Spot-Details">
+  <div class="drawer-grab" id="drawer-grab" role="button" tabindex="0" aria-label="Ergebnisfenster erweitern"><span></span></div>
+  <div class="drawer-header">
+   <div><div class="eyebrow">GEO-DISCOVERY ENGINE <span class="dot-mini">●</span> V1</div><h1 id="panel-heading">Küsten entdecken</h1><p class="subheading" id="panel-subheading">Echte Küstenstrukturen statt erfundener Hotspots</p></div>
+   <div class="count-box"><strong id="result-count">—</strong><small>SPOTS</small></div>
+  </div>
+  <div class="drawer-content" id="drawer-content">
+   <div class="discover-panel" id="discover-panel">
+    <div class="cta-block"><button class="analyze-button" id="analyze"><span class="radar-glyph">◉</span><span id="analyze-text">KÜSTE ANALYSIEREN</span><span class="button-arrow">↗</span></button><p class="cta-hint" id="status-text">Küstenabschnitt auswählen, heranzoomen und die Karte analysieren.</p></div>
+    <div class="filter-title"><span>FUNDSTELLEN</span><button id="explorer-btn" class="explorer-toggle" aria-pressed="false">✧ Entdecker-Modus</button></div>
+    <div class="filters" id="filters"></div>
+    <div id="spot-list" class="spot-list"><div class="empty-state"><div class="empty-icon">⌖</div><strong>Die Küste ist noch unerforscht</strong><span>Analysiere die Karte, um felsige Ufer, Molen, Riffe, Buchten und weitere Strukturen zu finden.</span></div></div>
+   </div>
+   <div id="favorites-panel" hidden></div>
+   <div id="rules-panel" hidden></div>
+   <div id="forum-panel" hidden></div>
+   <div id="catches-panel" hidden></div>
+   <div id="detail-panel" hidden></div>
+  </div>
+  <nav class="bottom-nav" aria-label="Hauptnavigation"><button data-tab="discover" class="nav-tab selected"><span>⌖</span> Entdecken</button><button data-tab="favorites" class="nav-tab"><span>♡</span> Favoriten</button><button data-tab="forum" class="nav-tab"><span>◈</span> Foren</button><button data-tab="catches" class="nav-tab"><span>◉</span> Fänge</button><button data-tab="rules" class="nav-tab"><span>☷</span> Regeln</button></nav>
+ </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script defer src="intel-engine.js"></script>
+<script defer src="app.js"></script>
+<script defer src="intel-ui.js"></script>
+<script defer src="free-store.js"></script>
+<script defer src="catch-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+name: Free RSS Radar
+on:
+  schedule:
+    - cron: '17 5,17 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: coastfinder-rss
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Update public RSS feed data (robots.txt and source allowlist)
+        run: python3 scripts/update_free_feed.py
+      - name: Commit public feed JSON (no personal data)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add feed/radar.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update public RSS metadata"
+            git push
+          fi

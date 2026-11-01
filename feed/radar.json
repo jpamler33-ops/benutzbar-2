@@ -1,0 +1,36 @@
+{
+  "updated_at": null,
+  "sources": [
+    {
+      "id": "barsch_alarm",
+      "name": "Barsch-Alarm Forum",
+      "homepage": "https://www.barsch-alarm.de/community/",
+      "enabled": true,
+      "last_check": null
+    },
+    {
+      "id": "anglerboard",
+      "name": "Anglerboard Forum",
+      "homepage": "https://www.anglerboard.de/",
+      "enabled": true,
+      "last_check": null
+    },
+    {
+      "id": "gobages",
+      "name": "Gobages Forum (France)",
+      "homepage": "https://forum.gobages.com/",
+      "enabled": true,
+      "last_check": null
+    },
+    {
+      "id": "morski_ribolov",
+      "name": "Morski Ribolov (Hrvatska)",
+      "homepage": "https://morski-ribolov.net/",
+      "enabled": true,
+      "last_check": null
+    }
+  ],
+  "articles": [],
+  "scope": "Nur ausdrücklich konfigurierte öffentliche RSS-Feeds, keine flächendeckende Forensuche.",
+  "data_type": "Quellenhinweise, keine überprüften Fänge"
+}
