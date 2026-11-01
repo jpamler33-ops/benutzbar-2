@@ -2,6 +2,7 @@
 from __future__ import annotations
 import html.parser
 import json
+import sys
 from pathlib import Path
 from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parent.parent
@@ -60,6 +61,8 @@ def check():
     allowed_sources = {s.get('id') for s in public['sources'] if isinstance(s, dict)}
     if None in allowed_sources:
         raise AssertionError('Source ID missing')
+    sys.path.insert(0, str(ROOT / 'scripts'))
+    import radar
     unique = set()
     for item in public['articles']:
         if not isinstance(item, dict):
@@ -71,6 +74,11 @@ def check():
         if not isinstance(uid, str) or not uid or uid in unique:
             raise AssertionError('Duplicate or missing article ID')
         unique.add(uid)
+        checked = radar.classify(item.get('title') or '', item.get('excerpt') or '', item.get('published_at'))
+        if not checked['relevant']:
+            raise AssertionError(f'Irrelevant RSS entry in public feed: {uid}')
+        if checked['regions'] != item.get('regions'):
+            raise AssertionError(f'RSS entry region tags inconsistent: {uid}')
         if item.get('source_id') not in allowed_sources:
             raise AssertionError(f'Unknown article source: {item.get("source_id")}')
         url = urlsplit(item.get('url') or '')
