@@ -1,0 +1,64 @@
+name: COASTFINDER Tenfold Full Functional QA
+on:
+  pull_request:
+    paths:
+      - '*.js'
+      - '*.css'
+      - '*.html'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'feed/**'
+      - '.github/workflows/tenfold-qa.yml'
+  push:
+    branches: [main]
+    paths:
+      - '*.js'
+      - '*.css'
+      - '*.html'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'feed/**'
+      - '.github/workflows/tenfold-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: coastfinder-tenfold-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  tenfold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout current project
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check JavaScript + Python syntax
+        run: |
+          for script in *.js tests/*.js; do node --check "$script"; done
+          python -m compileall -q scripts tests
+      - name: Run each existing test suite 10 times (offline fixtures)
+        run: |
+          set -euo pipefail
+          for round in $(seq 1 10); do
+            node tests/test_geo.js
+            node tests/test_geo_quality.js
+            node tests/test_map.js
+            node tests/test_radar_ui.js
+            python -m unittest discover -s tests -q
+            python scripts/quality_gate.py
+            echo "OFFLINE_QA_ROUND ${round}/10 PASS"
+          done
+      - name: Install headless browser driver (no paid service)
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
+          google-chrome --version
+      - name: Run UI functionality 10 times in Chrome desktop + mobile emulation
+        run: node tests/browser_10x.js

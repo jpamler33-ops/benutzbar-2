@@ -23,7 +23,7 @@ const toRad=x=>x*Math.PI/180;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const mod=(v,n)=>((v%n)+n)%n;
 function project(lat,lon,z){const sin=Math.sin(toRad(clamp(lat,-85.05,85.05))),scale=TILE*2**z;return {x:(lon+180)/360*scale,y:(.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))*scale};}
-function unproject(x,y,z){const scale=TILE*2**z;return {lat:Math.atan(Math.sinh(Math.PI*(1-2*y/scale)))*180/Math.PI,lon:((x/scale*360+540)%360)-180};}
+function unproject(x,y,z){const scale=TILE*2**z;return {lat:Math.atan(Math.sinh(Math.PI*(1-2*y/scale)))*180/Math.PI,lon:mod(x/scale*360,360)-180};}
 function coordForPixel(x,y){const c=project(state.lat,state.lon,state.zoom),w=map.clientWidth,h=map.clientHeight;return unproject(c.x+x-w/2,c.y+y-h/2,state.zoom);}
 function visibleBBox(){const a=coordForPixel(0,map.clientHeight),b=coordForPixel(map.clientWidth,0);return {s:Math.min(a.lat,b.lat),w:a.lon,n:Math.max(a.lat,b.lat),e:b.lon};}
 function normalizedLon(lon){return mod(lon+180,360)-180;}
