@@ -47,7 +47,8 @@ async function installMocks(context){
  });
 }
 async function one(browser,url,round){
- const ctx=await browser.newContext({...devices['iPhone 13'],locale:'de-DE',timezoneId:'Europe/Berlin',acceptDownloads:true});
+ const screen=round%2?{width:375,height:667}:{width:390,height:844};
+ const ctx=await browser.newContext({...devices['iPhone 13'],viewport:screen,screen,locale:'de-DE',timezoneId:'Europe/Berlin',acceptDownloads:true});
  await installMocks(ctx);
  const page=await ctx.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(String(e)));
@@ -58,7 +59,7 @@ async function one(browser,url,round){
   const dimensions=await page.locator('#map').boundingBox();
   check('iPhone-sized map layout',dimensions&&dimensions.width>=370&&dimensions.height>=250);
   const attribution=await page.locator('.map-attribution').boundingBox();
-  check('OpenStreetMap attribution visible',attribution&&attribution.y>=0&&attribution.y+attribution.height<844);
+  check('OpenStreetMap attribution visible',attribution&&attribution.y>=0&&attribution.y+attribution.height<screen.height);
   const source=await page.locator('#tiles img').first().evaluate(el=>el.referrerPolicy);
   check('OSM compliant referrer in WebKit',source==='strict-origin-when-cross-origin');
   const z=await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom);
