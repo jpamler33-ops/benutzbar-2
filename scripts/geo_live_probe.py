@@ -8,6 +8,7 @@ import json
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+import xml.etree.ElementTree as ET
 
 ORIGIN = 'https://jpamler33-ops.github.io'
 PROFILE = 'https://rest.emodnet-bathymetry.eu/depth_profile?' + urlencode({
@@ -54,6 +55,20 @@ def check_wms():
         raise ValueError(f'EMODnet WMS did not return PNG (HTTP {code}, {content_type}), body=' + repr(prefix[:500].decode('utf-8', 'replace')))
     print('PASS EUSeaMap 2025 WMS: actual PNG response')
 
+def diagnose_layers():
+    """Report real published EUSeaMap layer IDs on an exception."""
+    url = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms?' + urlencode({
+        'service':'WMS','version':'1.3.0','request':'GetCapabilities'
+    })
+    req=Request(url,headers={'User-Agent':'COASTFINDER-FreeHealthCheck/1.0'})
+    with urlopen(req,timeout=15) as response:
+        raw=response.read(3_000_000)
+    root=ET.fromstring(raw)
+    names=sorted({(node.text or '').strip() for node in root.iter()
+                  if node.tag.rsplit('}',1)[-1]=='Name' and
+                  ('eusm2025' in (node.text or '').lower() or 'substrate' in (node.text or '').lower())})
+    print('WMS_PUBLISHED_RELEVANT_LAYERS:',repr(names[:80]))
+
 if __name__ == '__main__':
     failures = []
     for name, check in [('depth_profile', check_profile), ('EUSeaMap WMS', check_wms)]:
@@ -61,6 +76,11 @@ if __name__ == '__main__':
             check()
         except (HTTPError, URLError, TimeoutError, OSError, ValueError, TypeError) as exc:
             print(f'WARN {name}: {type(exc).__name__}: {str(exc)[:800]}')
+            if name == 'EUSeaMap WMS':
+                try:
+                    diagnose_layers()
+                except (HTTPError, URLError, TimeoutError, OSError, ValueError, ET.ParseError) as diagnostic:
+                    print('WMS_CAPABILITIES_ERROR:',type(diagnostic).__name__,str(diagnostic)[:160])
             failures.append(name)
     if failures:
         raise SystemExit('Live EMODnet unavailable or browser-incompatible: ' + ', '.join(failures))
