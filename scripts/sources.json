@@ -32,7 +32,22 @@
     "feed_url": "https://morski-ribolov.net/feed/",
     "homepage": "https://morski-ribolov.net/",
     "type": "rss",
+    "enabled": false,
+    "notes": "Deaktiviert: /feed/, /feed.php und /app.php/feed/ lieferten bei Live-Prüfungen kein gültiges RSS/XML. Forum bleibt manuell erreichbar; keine robots-Umgehung."
+  },
+  {
+    "id": "naudici_shore",
+    "name": "Na Udici – Uferangeln an der Adria",
+    "feed_url": "https://naudici.com/feed/",
+    "homepage": "https://naudici.com/ribolov-s-obale/",
+    "type": "rss",
+    "kind": "editorial",
+    "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
+    "editorial_adriatic": true,
+    "allowed_categories": [
+      "Ribolov s obale"
+    ],
     "enabled": true,
-    "notes": "RSS-Endpunkt nicht live bestätigt, Fehler werden sichtbar protokolliert."
+    "notes": "Live am 02.11.2026 validierter WordPress-RSS-Feed (200, 10 Artikel); robots erlaubt. Nur ausdrücklich als Uferangeln kategorisierte Artikel. Kein Forum und keine bestätigten Fangdaten."
   }
 ]
