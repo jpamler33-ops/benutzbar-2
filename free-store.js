@@ -91,6 +91,44 @@ function safeWeather(raw){
  out.warnings=Array.isArray(raw.warnings)?raw.warnings.filter(x=>typeof x==='string').slice(0,8).map(x=>x.slice(0,160)):[];
  return out;
 }
-async function importData(file){if(!file||file.size>2_000_000)throw Error('Datei fehlt oder über 2 MB');const raw=JSON.parse(await file.text());if(raw.format!=='coastfinder-free-catches'||raw.version!==1||!Array.isArray(raw.records))throw Error('Nicht das COASTFINDER-Exportformat');if(raw.records.length>MAX_RECORDS)throw Error('Zu viele Datensätze');const rows=raw.records.map(r=>{const val=validate(r);return {...val,id:/^[0-9a-f-]{20,50}$/.test(r.id||'')?r.id:val.id,created_at:typeof r.created_at==='string'?r.created_at:val.created_at,weather_status:['available','partial','unavailable','not_loaded'].includes(r.weather_status)?r.weather_status:'not_loaded',weather:safeWeather(r.weather)};});const seen=new Set(),merged=[...asArray()];for(const row of rows){if(seen.has(row.id))continue;seen.add(row.id);if(!merged.some(x=>x.id===row.id))merged.push(row);}if(merged.length>MAX_RECORDS)throw Error('Zusammen zu viele Datensätze');persist(merged);return rows.length;}
+function restoreBackupRecord(raw){
+  // Re-run all normal input validation; only known, bounded backup metadata survives.
+  const base=validate(raw);
+  const id=typeof raw.id==='string'&&/^[0-9a-f-]{20,50}$/.test(raw.id)?raw.id:base.id;
+  const created=typeof raw.created_at==='string'?Date.parse(raw.created_at):NaN;
+  const created_at=Number.isFinite(created)&&created<=Date.now()+86400000
+    ?new Date(created).toISOString():base.created_at;
+  const weather=safeWeather(raw.weather);
+  let weather_status=['available','partial','unavailable','not_loaded'].includes(raw.weather_status)
+    ?raw.weather_status:'not_loaded';
+  // A label asserting weather is available must not survive without actual model data.
+  if(!weather&&['available','partial'].includes(weather_status))weather_status='unavailable';
+  const weather_error=typeof raw.weather_error==='string'
+    ?raw.weather_error.slice(0,300):null;
+  const note=typeof raw.review_note==='string'?raw.review_note.trim():'';
+  const reviewed=raw.evidence_status==='source_reviewed'&&!!base.source_url&&
+    note.length>=12&&note.length<=300;
+  return {...base,id,created_at,weather_status,weather,weather_error,
+    evidence_status:reviewed?'source_reviewed':'unverified',
+    ...(reviewed?{review_note:note}:{})};
+}
+async function importData(file){
+  if(!file||file.size>2_000_000)throw Error('Datei fehlt oder über 2 MB');
+  const raw=JSON.parse(await file.text());
+  if(!raw||raw.format!=='coastfinder-free-catches'||raw.version!==1||!Array.isArray(raw.records))
+    throw Error('Nicht das COASTFINDER-Exportformat');
+  if(raw.records.length>MAX_RECORDS)throw Error('Zu viele Datensätze');
+  const incoming=raw.records.map(restoreBackupRecord);
+  const seen=new Set(),merged=[...asArray()];
+  let added=0;
+  for(const row of incoming){
+    if(seen.has(row.id))continue;
+    seen.add(row.id);
+    if(!merged.some(x=>x.id===row.id)){merged.push(row);added++;}
+  }
+  if(merged.length>MAX_RECORDS)throw Error('Zusammen zu viele Datensätze');
+  persist(merged);
+  return added;
+}
 window.CoastFreeStore={api,stats,validate,exportData,importData,asArray};
 })();
