@@ -19,7 +19,7 @@ assert.equal(p.delta,17);
 assert.equal(geo.parseProfile([null,-1,-2],500).complete,false);
 assert.throws(()=>geo.parseProfile({values:[1,2,3]},500));
 const wms=new URL(geo.habitatUrl({s:43.5,w:16.4,n:43.6,e:16.5},800,700));
-assert.equal(wms.searchParams.get('layers'),'eusm2025_subs_400');
+assert.equal(wms.searchParams.get('layers'),'eusm2025_eunis2019_400');
 assert.equal(wms.searchParams.get('bbox'),'43.500000,16.400000,43.600000,16.500000');
 assert.equal(wms.searchParams.get('width'),'512');
 assert.equal(wms.searchParams.get('height'),'512');
