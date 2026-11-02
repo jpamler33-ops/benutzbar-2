@@ -1,5 +1,6 @@
 {
-  "updated_at": "2026-11-01T19:02:25.111663Z",
+  "discarded_old_entries": 0,
+  "updated_at": "2026-11-02T13:32:57.030104Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -7,7 +8,7 @@
       "homepage": "https://www.barsch-alarm.de/community/",
       "enabled": true,
       "last_check": {
-        "checked_at": "2026-11-01T19:02:19.175612Z",
+        "checked_at": "2026-11-02T13:32:51.895426Z",
         "status": "ok",
         "fetched": 0,
         "stored": 0,
@@ -20,7 +21,7 @@
       "homepage": "https://www.anglerboard.de/",
       "enabled": true,
       "last_check": {
-        "checked_at": "2026-11-01T19:02:20.652181Z",
+        "checked_at": "2026-11-02T13:32:53.128492Z",
         "status": "ok",
         "fetched": 0,
         "stored": 0,
@@ -33,10 +34,10 @@
       "homepage": "https://forum.gobages.com/",
       "enabled": true,
       "last_check": {
-        "checked_at": "2026-11-01T19:02:21.933456Z",
+        "checked_at": "2026-11-02T13:32:54.275053Z",
         "status": "ok",
-        "fetched": 2,
-        "stored": 2,
+        "fetched": 0,
+        "stored": 0,
         "message": ""
       }
     },
@@ -46,7 +47,7 @@
       "homepage": "https://morski-ribolov.net/",
       "enabled": true,
       "last_check": {
-        "checked_at": "2026-11-01T19:02:23.495844Z",
+        "checked_at": "2026-11-02T13:32:55.662354Z",
         "status": "error",
         "fetched": 0,
         "stored": 0,
@@ -56,6 +57,5 @@
   ],
   "articles": [],
   "scope": "Nur konfigurierte und robots.txt-zugelassene RSS-Feeds; keine flächendeckende Forensuche.",
-  "data_type": "Unbestätigte Quellenhinweise, keine tatsächlichen Fänge",
-  "quality_note": "Zwei zuvor fälschlich der Côte d’Azur zugeordnete Angelruten-Diskussionen entfernt; letzter RSS-Quellcheck bleibt unverändert."
+  "data_type": "Unbestätigte Quellenhinweise, keine tatsächlichen Fänge"
 }
