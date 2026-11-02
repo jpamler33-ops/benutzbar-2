@@ -35,7 +35,7 @@ def check_profile():
     if code != 200 or not isinstance(result, list) or len(result) < 5 or sum(
         isinstance(n, (int, float)) and n >= 0 for n in result
     ) < 5:
-        raise ValueError('EMODnet REST did not return expected depth samples')
+        raise ValueError('EMODnet REST response invalid: type=' + type(result).__name__ + ', sample=' + repr(str(result)[:350]))
     if cors not in ('*', ORIGIN):
         raise ValueError('EMODnet REST lacks browser CORS permission '
                          f'(Access-Control-Allow-Origin: {cors or "missing"})')
@@ -48,10 +48,10 @@ def check_wms():
     })
     with urlopen(req, timeout=15) as response:
         content_type = response.headers.get('Content-Type', '')
-        prefix = response.read(8)
+        prefix = response.read(1500)
         code = response.status
-    if code != 200 or prefix != bytes.fromhex('89504e470d0a1a0a'):
-        raise ValueError(f'EMODnet WMS did not return PNG (HTTP {code}, {content_type})')
+    if code != 200 or not prefix.startswith(bytes.fromhex('89504e470d0a1a0a')):
+        raise ValueError(f'EMODnet WMS did not return PNG (HTTP {code}, {content_type}), body=' + repr(prefix[:500].decode('utf-8', 'replace')))
     print('PASS EUSeaMap 2025 WMS: actual PNG response')
 
 if __name__ == '__main__':
