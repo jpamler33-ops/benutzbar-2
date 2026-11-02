@@ -49,12 +49,18 @@ jobs:
         run: |
           node tests/test_geo.js
           node tests/test_geo_quality.js
+      - name: Radar UI regression (no paid browser service)
+        run: node tests/test_radar_ui.js
       - name: Python syntax
         run: python -m compileall -q scripts
       - name: RSS precision and regression tests
         run: python -m unittest discover -s tests -v
       - name: Static app, PWA and public feed security
         run: python scripts/quality_gate.py
+      - name: Diagnostic real RSS collection (no commit)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: python scripts/update_free_feed.py
       - name: Daily live website and weather source probes
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python scripts/live_probe.py

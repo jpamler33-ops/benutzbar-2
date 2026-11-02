@@ -140,12 +140,12 @@ FISHING_CONTEXT = (
 CATCH_CONTEXT = ('caught', 'gefangen', 'fangbericht', 'ulov', 'ulovljen', 'ulovljena', 'pris', 'prise')
 AD_HEADLINE = re.compile(
     r"\b(?:vendues?|vends|vendre|vente|à vendre|a vendre|occasion|"
-    r"verkaufe|verkauf|verkaufen|for sale|selling|wanted|suche zu kaufen|"
+    r"verkaufe|verkauf|verkaufen|prodaja|prodajem|prodam|kupujem|akcija|popust|for sale|selling|wanted|suche zu kaufen|"
     r"wtb|wts|sold|à céder|a ceder)\b", re.I
 )
 GEAR_HEADLINE = re.compile(
     r"\b(?:cannes?|moulinets?|blanks?|rouleaux|rods?|reels?|"
-    r"tackle|fishing gear|angelrute[n]?|rollen|test de matériel|"
+    r"tackle|fishing gear|angelrute[n]?|rollen|štapovi|štapova|stapovi|stapova|ribolovni pribor|test de matériel|"
     r"réparation|reparation|restaurer)\b", re.I
 )
 
@@ -249,10 +249,23 @@ def parse_feed(blob: bytes, source: dict) -> list[dict]:
         if not link or not title or link in seen:
             continue
         seen.add(link)
-        published = iso_date(pub)
-        tags = classify(title, summary, published)
-        if not tags['relevant']:
+        # Publisher-controlled category tags are not catch or location evidence.
+        category_labels = [clean_text(el.text or '', 100) for el in item.findall('category')]
+        if is_atom:
+            category_labels += [clean_text(el.get('term') or '', 100) for el in item.findall(f'{NS_ATOM}category')]
+        required = {str(x).casefold() for x in source.get('allowed_categories', [])}
+        if required and not required.intersection(x.casefold() for x in category_labels):
             continue
+        published = iso_date(pub)
+        tags = classify(title, summary + ' ' + ' '.join(category_labels), published)
+        if not tags['relevant']:
+            # Special-source coastal editorial report: useful reading without
+            # verified coordinates or classification as a regional catch.
+            if (not source.get('editorial_adriatic') or not required or
+                    tags['regions'] or AD_HEADLINE.search(title) or GEAR_HEADLINE.search(title)):
+                continue
+            tags['countries'] = []  # Croatian publisher != verified Croatian catch
+            tags['relevance'] = 0
         output.append({'id':hashlib.sha256(link.encode('utf-8')).hexdigest()[:24], 'source_id':source['id'], 'url':link, 'title':title, 'excerpt':summary, 'published_at':published, **tags})
     return output
 
@@ -346,11 +359,14 @@ def _robots_allows(source: dict, fetcher=_get_bytes) -> bool:
 
 def sync_one(db: sqlite3.Connection, source: dict, fetcher=_get_bytes, robots_checker=None) -> dict:
     now=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+    retrieved_items = 0
     try:
         allowed = (robots_checker or (lambda s:_robots_allows(s,fetcher)))(source)
         if not allowed:
             raise PermissionError('robots.txt untersagt diesen Feed')
         blob=fetcher(source['feed_url'])
+        root=ET.fromstring(blob)
+        retrieved_items=len(root.findall('.//item'))+len(root.findall('.//{http://www.w3.org/2005/Atom}entry'))
         posts=parse_feed(blob,source)
         added=store_articles(db,posts)
         status,message='ok',''
@@ -358,7 +374,7 @@ def sync_one(db: sqlite3.Connection, source: dict, fetcher=_get_bytes, robots_ch
         posts=[];added=0;status='error';message=f'{type(exc).__name__}: {str(exc)[:160]}'
     with db:
         db.execute('INSERT INTO syncs(source_id,checked_at,status,fetched,stored,message) VALUES(?,?,?,?,?,?)',
-          (source['id'],now,status,len(posts),added,message))
+          (source['id'],now,status,retrieved_items,added,message))
         db.execute('DELETE FROM syncs WHERE id NOT IN (SELECT id FROM syncs ORDER BY id DESC LIMIT 1000)')
     return {'source':source['id'],'status':status,'matched':len(posts),'new':added,'error':message}
 
@@ -424,7 +440,8 @@ def get_status(db:sqlite3.Connection,sources=None):
     for s in sources:
         row=db.execute('SELECT checked_at,status,fetched,stored,message FROM syncs WHERE source_id=? ORDER BY id DESC LIMIT 1',(s['id'],)).fetchone()
         result.append({'id':s['id'],'name':s['name'],'homepage':s.get('homepage'),'enabled':s.get('enabled',False),
-           'last_check':dict(row) if row else None})
+            'kind':s.get('kind','forum'),'scope':s.get('scope',''),
+            'last_check':dict(row) if row else None})
     return {'count':db.execute('SELECT COUNT(*) FROM articles').fetchone()[0], 'sources':result,'scope':'Nur konfigurierte, öffentliche RSS-Feeds. Nicht alle Foren; keine Reddit-Sammlung.','data_type':'Quellenhinweise, keine überprüften Fänge'}
 
 

@@ -15,8 +15,9 @@ SOURCES=BASE/'scripts'/'sources.json'
 
 def revalidate_previous(rows, sources):
     """Recheck cached articles so old false positives cannot survive every refresh."""
-    approved = {s['id']:urlsplit(s['feed_url']).hostname.lower().removeprefix('www.')
-                for s in sources if s.get('enabled')}
+    active = {s['id']:s for s in sources if s.get('enabled')}
+    approved = {key:urlsplit(s['feed_url']).hostname.lower().removeprefix('www.')
+                for key,s in active.items()}
     kept = []
     for item in rows:
         if not isinstance(item, dict) or not isinstance(item.get('id'), str):
@@ -36,6 +37,14 @@ def revalidate_previous(rows, sources):
             continue
         tags = radar.classify(title, excerpt, item.get('published_at'))
         if not tags['relevant']:
+            # A specialist editorial article was admitted only through its verified
+            # RSS category on first ingest. Retain that classification across polls,
+            # but never turn an unlocated item into a mapped regional catch.
+            source = active[source_id]
+            if (source.get('editorial_adriatic') and not radar.AD_HEADLINE.search(title)
+                    and not radar.GEAR_HEADLINE.search(title)
+                    and (not item.get('regions') or set(item['regions']) <= set(tags['regions']))):
+                kept.append(item)
             continue
         kept.append({**item, **{k:v for k,v in tags.items() if k != 'relevant'}})
     return kept
