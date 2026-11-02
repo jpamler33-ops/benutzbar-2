@@ -92,7 +92,7 @@ function dashboard(h,rows,s,region){
  h.querySelector('#catch-import').onclick=()=>h.querySelector('#catch-import-file').click();
  h.querySelector('#catch-import-file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;
    try{if(!confirm('Lokale JSON-Fangdaten importieren und mit bestehenden Einträgen zusammenführen?'))return;
-     const n=await window.CoastFreeStore.importData(f);await render(region);warn(n+' Datensätze geprüft und importiert.');}
+     const n=await window.CoastFreeStore.importData(f);await render(region);warn(n+' neue Datensätze importiert. Bereits vorhandene Einträge bleiben unverändert.');}
    catch(err){warn(String(err.message));}finally{e.target.value='';}};
  h.querySelector('#catch-kind').onchange=e=>{
   const ext=e.target.value==='external';
