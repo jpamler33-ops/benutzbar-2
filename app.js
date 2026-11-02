@@ -28,15 +28,15 @@ function coordForPixel(x,y){const c=project(state.lat,state.lon,state.zoom),w=ma
 function visibleBBox(){const a=coordForPixel(0,map.clientHeight),b=coordForPixel(map.clientWidth,0);return {s:Math.min(a.lat,b.lat),w:a.lon,n:Math.max(a.lat,b.lat),e:b.lon};}
 function normalizedLon(lon){return mod(lon+180,360)-180;}
 function setCenter(lat,lon){state.lat=clamp(lat,-85.04,85.04);state.lon=normalizedLon(lon);renderMap();}
-function zoomTo(z,position){const next=clamp(Math.round(z),MIN_ZOOM,MAX_ZOOM);if(next===state.zoom)return;let pivot=null;if(position){pivot=coordForPixel(position.x,position.y);}state.zoom=next;if(pivot){const p=project(pivot.lat,pivot.lon,next),w=map.clientWidth,h=map.clientHeight;const centerX=p.x-(position.x-w/2),centerY=p.y-(position.y-h/2),c=unproject(centerX,centerY,next);state.lat=c.lat;state.lon=c.lon;}renderMap();updateBathy();window.dispatchEvent(new Event('coastfinder:mapchange'));}
+function zoomTo(z,position){const next=clamp(Math.round(z),MIN_ZOOM,MAX_ZOOM);if(next===state.zoom)return;let pivot=null;if(position){pivot=coordForPixel(position.x,position.y);}state.zoom=next;if(pivot){const p=project(pivot.lat,pivot.lon,next),w=map.clientWidth,h=map.clientHeight;const centerX=p.x-(position.x-w/2),centerY=p.y-(position.y-h/2),c=unproject(centerX,centerY,next);state.lat=clamp(c.lat,-85.04,85.04);state.lon=normalizedLon(c.lon);}renderMap();updateBathy();window.dispatchEvent(new Event('coastfinder:mapchange'));}
 function pan(dx,dy){const p=project(state.lat,state.lon,state.zoom);const c=unproject(p.x-dx,p.y-dy,state.zoom);state.lat=clamp(c.lat,-85.04,85.04);state.lon=c.lon;renderMap();}
-const tileCache=new Map(); let lastKey='',renderPending=false;
+const tileCache=new Map(), failedTiles=new Set(); let renderPending=false,tileErrorShown=false;
 function requestRender(){if(renderPending)return;renderPending=true;requestAnimationFrame(()=>{renderPending=false;renderMap();});}
 function renderMap(){const width=map.clientWidth,height=map.clientHeight;if(!width||!height)return;const z=state.zoom,n=2**z,c=project(state.lat,state.lon,z);const firstX=Math.floor((c.x-width/2)/TILE)-1, lastX=Math.ceil((c.x+width/2)/TILE)+1;const firstY=clamp(Math.floor((c.y-height/2)/TILE)-1,0,n-1),lastY=clamp(Math.ceil((c.y+height/2)/TILE)+1,0,n-1);const needed=new Set();
 for(let ix=firstX;ix<=lastX;ix++)for(let iy=firstY;iy<=lastY;iy++){
  const key=`${z}/${mod(ix,n)}/${iy}`,x=ix*TILE-c.x+width/2,y=iy*TILE-c.y+height/2;needed.add(key);
- let img=tileCache.get(key);if(!img){img=document.createElement('img');img.className='tile marine';img.draggable=false;img.alt='';img.decoding='async';img.loading='eager';img.referrerPolicy='no-referrer';img.src=`https://tile.openstreetmap.org/${key}.png`;img.onerror=()=>{img.style.background='#abc4c0';};tiles.appendChild(img);tileCache.set(key,img);}img.style.left=`${Math.round(x)}px`;img.style.top=`${Math.round(y)}px`; }
- for(const [key,img] of tileCache){if(!needed.has(key)){img.remove();tileCache.delete(key);}}
+ let img=tileCache.get(key);if(!img){img=document.createElement('img');img.className='tile marine';img.draggable=false;img.alt='';img.decoding='async';img.loading='eager';img.referrerPolicy='strict-origin-when-cross-origin';img.onload=()=>{failedTiles.delete(key);img.style.background='';if(!failedTiles.size&&navigator.onLine!==false)$('online-status').textContent='KARTE BEREIT';};img.onerror=()=>{failedTiles.add(key);img.style.background='#abc4c0';$('online-status').textContent='KARTENFEHLER';if(!tileErrorShown){tileErrorShown=true;showBanner('OpenStreetMap-Kartenkacheln derzeit nicht erreichbar. Verbindung prüfen und Karte neu laden.');}};img.src=`https://tile.openstreetmap.org/${key}.png`;tiles.appendChild(img);tileCache.set(key,img);}img.style.left=`${Math.round(x)}px`;img.style.top=`${Math.round(y)}px`; }
+ for(const [key,img] of tileCache){if(!needed.has(key)){img.remove();tileCache.delete(key);failedTiles.delete(key);}}
  // Markers: user-generated and OSM features only.
  markers.replaceChildren();const visible=[...state.results,...state.pins];for(const s of visible){const p=project(s.lat,s.lon,z);let x=p.x-c.x;if(x>n*TILE/2)x-=n*TILE;if(x<-n*TILE/2)x+=n*TILE;x+=width/2;const y=p.y-c.y+height/2;if(x < -28||x>width+28||y < -28||y>height+28)continue;
  const b=document.createElement('button');b.className=`marker ${s.category}${state.selected?.id===s.id?' active':''}`;b.style.left=x+'px';b.style.top=y+'px';b.textContent=META[s.category]?.icon||'●';b.title=`${s.name} – ${s.typeLabel}`;b.setAttribute('aria-label',b.title);b.addEventListener('click',e=>{e.stopPropagation();selectSpot(s);});markers.appendChild(b);}
@@ -97,7 +97,7 @@ window.CoastCatches?.attachSpot(s,state.region);
 for(const button of document.querySelectorAll('.nav-tab'))button.onclick=()=>selectTab(button.dataset.tab);
 $('help-btn').onclick=()=>selectTab('rules');
 window.addEventListener('resize',()=>{requestRender();updateBathy();window.dispatchEvent(new Event('coastfinder:mapchange'));});
-window.addEventListener('online',()=>{$('online-status').innerHTML='<span class="status-dot"></span>LIVE MAP';});
+window.addEventListener('online',()=>{tileErrorShown=false;$('online-status').textContent='KARTE LÄDT';for(const key of [...failedTiles]){const img=tileCache.get(key);if(img)img.src=`https://tile.openstreetmap.org/${key}.png`;}});
 window.addEventListener('offline',()=>{$('online-status').textContent='OFFLINE';notify('Offline: neue Kartendaten nicht verfügbar.');});
 // Minimal test surface for deterministic browser-based checks, not used by the UI.
 window.__COASTFINDER_TEST__={parseOSM,queryOSM,evaluate,project,unproject,visibleBBox,getState:()=>state};
