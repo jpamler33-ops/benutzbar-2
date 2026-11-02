@@ -140,12 +140,12 @@ FISHING_CONTEXT = (
 CATCH_CONTEXT = ('caught', 'gefangen', 'fangbericht', 'ulov', 'ulovljen', 'ulovljena', 'pris', 'prise')
 AD_HEADLINE = re.compile(
     r"\b(?:vendues?|vends|vendre|vente|à vendre|a vendre|occasion|"
-    r"verkaufe|verkauf|verkaufen|for sale|selling|wanted|suche zu kaufen|"
+    r"verkaufe|verkauf|verkaufen|prodaja|prodajem|prodam|kupujem|akcija|popust|for sale|selling|wanted|suche zu kaufen|"
     r"wtb|wts|sold|à céder|a ceder)\b", re.I
 )
 GEAR_HEADLINE = re.compile(
     r"\b(?:cannes?|moulinets?|blanks?|rouleaux|rods?|reels?|"
-    r"tackle|fishing gear|angelrute[n]?|rollen|test de matériel|"
+    r"tackle|fishing gear|angelrute[n]?|rollen|štapovi|štapova|stapovi|stapova|ribolovni pribor|test de matériel|"
     r"réparation|reparation|restaurer)\b", re.I
 )
 
