@@ -114,7 +114,7 @@ async function mobile(browser,url,round){
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:100,y:250,id:1},{x:150,y:250,id:2}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:50,y:250,id:1},{x:220,y:250,id:2}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
- check('Mobile Pinch',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)>=z);
+ check('Mobile Pinch',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)>z);
  check('Mobile ohne JS Ausnahme',errors.length===0);
  }finally{await ctx.close();}
 }
