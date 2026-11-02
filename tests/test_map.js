@@ -62,7 +62,22 @@ imgs[1].onerror();
 assert.equal(el('online-status').textContent,'KARTENFEHLER');
 assert.match(el('map-banner').textContent,/Kartenkacheln/);
 assert.equal(el('map-banner').hidden,false);
-const state=env.__COASTFINDER_TEST__.getState();
+const api=env.__COASTFINDER_TEST__;
+const state=api.getState();
+// Regression: the previous inverse projection was off by 180 degrees.
+// Check distinct hemispheres, the antimeridian, and different tile scales.
+for(const lat of [-75,-45,0,44.87,75]){
+  for(const lon of [-179.9,-122.4,-13.85,0,13.85,179.9]){
+    for(const zoom of [3,8,12,18]){
+      const p=api.project(lat,lon,zoom), back=api.unproject(p.x,p.y,zoom);
+      assert(Math.abs(back.lat-lat)<1e-7,'Latitude projection roundtrip '+lat+'/'+zoom);
+      assert(Math.abs(back.lon-lon)<1e-7,'Longitude projection roundtrip '+lon+'/'+zoom);
+    }
+  }
+}
+const viewport=api.visibleBBox();
+assert(viewport.w<state.lon&&viewport.e>state.lon,'Map visible longitude extent must contain center');
+assert(viewport.s<state.lat&&viewport.n>state.lat,'Map visible latitude extent must contain center');
 const originalZoom=state.zoom;
 map.fire('wheel',{clientX:200,clientY:200,deltaY:-100,preventDefault(){}});
 assert.equal(state.zoom,originalZoom+1);
@@ -73,7 +88,7 @@ const fakeTarget={closest:()=>null};
 map.fire('pointerdown',{pointerId:1,target:fakeTarget,clientX:160,clientY:200});
 map.fire('pointermove',{pointerId:1,clientX:210,clientY:200});
 map.fire('pointerup',{pointerId:1,clientX:210,clientY:200});
-assert.notEqual(state.lon,beforeLon,'Dragging should pan the map');
+assert(state.lon<beforeLon,'Dragging right should pan map center WEST, not jump 180°');
 assert(Number.isFinite(state.lon)&&Number.isFinite(state.lat));
 env.navigator.onLine=true;
 for(const cb of listeners.online||[])cb();
