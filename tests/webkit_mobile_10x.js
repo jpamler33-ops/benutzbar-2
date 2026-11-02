@@ -83,11 +83,28 @@ async function one(browser,url,round){
   check('Bathymetry control available',grid===1);
   await page.locator('#bathy-btn').tap();
   check('Bathymetry toggle available',await page.locator('#bathy-btn').getAttribute('aria-pressed')==='true');
+  await page.waitForFunction(()=>document.querySelector('#bathy')?.hidden===false);
+  check('Bathymetry image only visible after load',await page.locator('#bathy').evaluate(img=>img.complete&&img.naturalWidth>0&&!img.hidden));
   await page.locator('#bathy-btn').tap();
   const habitat=page.locator('#habitat-btn');
   await habitat.tap();
   check('EUSeaMap layer available',await habitat.getAttribute('aria-pressed')==='true');
+  await page.waitForFunction(()=>document.querySelector('.habitat-wms')?.hidden===false);
+  check('Habitat image only visible after load',await page.locator('.habitat-wms').evaluate(img=>img.complete&&img.naturalWidth>0&&!img.hidden));
   await habitat.tap();
+  // The real iPhone screen recording showed ~115m raster cells as huge,
+  // misleading brown blocks on detailed coastal map zooms.
+  await page.locator('#zoom-plus').tap();
+  await page.locator('#zoom-plus').tap();
+  check('Zoom 14 reached',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)===14);
+  await page.locator('#bathy-btn').tap();
+  check('Overzoom bathymetry is rejected',await page.locator('#bathy-btn').getAttribute('aria-pressed')==='false'&&await page.locator('#bathy').evaluate(img=>img.hidden));
+  await habitat.tap();
+  check('Overzoom habitat is rejected',await habitat.getAttribute('aria-pressed')==='false'&&
+    (await page.locator('.geo-layer-status').innerText()).includes('Ab Zoom 14'));
+  await page.locator('#zoom-minus').tap();
+  await page.locator('#zoom-minus').tap();
+  check('Map still navigable after raster limit',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)===12);
 
   await page.locator('.nav-tab[data-tab="forum"]').tap();
   await page.waitForSelector('.radar-stat-row');
