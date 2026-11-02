@@ -74,8 +74,12 @@ async function loadRadar(host,region){
    if(!res.ok)throw Error('Öffentlicher RSS-Datenstand fehlt');
    const raw=await res.json();
    if(!Array.isArray(raw.articles))throw Error('Ungültiger Feed-Datenstand');
-   const regionRows=raw.articles.filter(x=>Array.isArray(x.regions)&&x.regions.includes(region.id)).slice(0,35);
    const sourceList=Array.isArray(raw.sources)?raw.sources:[];
+   const regionRows=raw.articles.filter(x=>Array.isArray(x.regions)&&x.regions.includes(region.id)).slice(0,35);
+   const editorialIDs=new Set(sourceList.filter(x=>x.kind==='editorial'&&x.enabled).map(x=>x.id));
+   // Never count unlocated editorial posts as regional catches or fishing spots.
+   const unlocatedRows=region.country==='HR'?raw.articles.filter(x=>Array.isArray(x.regions)&&
+     x.regions.length===0&&editorialIDs.has(x.source_id)).slice(0,8):[];
    const counts=new Map(),pairs=new Map();
    for(const x of regionRows){for(const fish of x.fish||[])counts.set(fish,(counts.get(fish)||0)+1);
      for(const fish of x.fish||[])for(const theme of x.themes||[]){const key=fish+'|'+theme,entry=pairs.get(key)||{fish,theme,mentions:0,sources:new Set()};entry.mentions++;entry.sources.add(x.source_id);pairs.set(key,entry);}}
@@ -85,22 +89,30 @@ async function loadRadar(host,region){
    if(seq!==radarRequest||!host.isConnected)return;
    if(!Array.isArray(data.articles)||!Array.isArray(status.sources))throw new Error('Ungültige Datenantwort');
    const rows=data.articles.slice(0,35), sources=status.sources;
-   const seenSources=sources.filter(s=>s.last_check?.status==='ok');
+   const seenSources=sources.filter(s=>s.enabled&&s.last_check?.status==='ok');
    const failed=sources.filter(s=>s.enabled&&s.last_check?.status==='error');
-   const latest=sources.reduce((t,s)=>s.last_check?.checked_at&&s.last_check.checked_at>t?s.last_check.checked_at:t,'');
+   const latest=sources.filter(s=>s.enabled).reduce((t,s)=>s.last_check?.checked_at&&s.last_check.checked_at>t?s.last_check.checked_at:t,'');
+   const stale=!!latest&&Number.isFinite(Date.parse(latest))&&Date.now()-Date.parse(latest)>48*3600*1000;
    const fishs=(Array.isArray(summary.fish_mentions)?summary.fish_mentions:[]).slice(0,5).map(x=>[x.name,x.mentions]);
    const combinations=(Array.isArray(summary.co_mentions)?summary.co_mentions:[]).filter(x=>x.source_count>=2).slice(0,4);
    const dt=x=>{if(!x)return 'kein Datum';const d=new Date(x);return Number.isNaN(d.getTime())?'Datum unklar':d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});};
-   const sourceBadges=sources.map(s=>`<span class="radar-source-tag" title="${esc(s.last_check?.message||'')}">${esc(s.name)}: ${s.last_check?.status==='ok'?'OK':s.last_check?.status==='error'?'Fehler':'noch nicht geprüft'}</span>`).join('');
+   const sourceBadges=sources.map(s=>`<span class="radar-source-tag" title="${esc(s.last_check?.message||s.scope||'')}">${esc(s.name)}: ${!s.enabled?'pausiert':s.last_check?.status==='ok'?'Abruf OK ('+Number(s.last_check?.fetched||0)+' Einträge)':s.last_check?.status==='error'?'Fehler':'noch nicht geprüft'}</span>`).join('');
+   const broadMarkup=unlocatedRows.length?
+     `<details class="radar-unlocated"><summary>Weitere Adria-Uferangel-Berichte ohne belegten Ort (${unlocatedRows.length})</summary>
+       <p class="small-muted">Redaktionelle Beiträge: Region und Fang sind nicht verifiziert. Diese Meldungen beeinflussen keine Spot-Wertung oder Fangstatistik.</p>
+       <div class="radar-entries">${unlocatedRows.map(x=>`<article class="intel-source"><div class="intel-source-meta">REDAKTION · ${esc(dt(x.published_at))} · Ort unbekannt</div>
+       <a href="${esc(/^https:\/\//.test(x.url)?x.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(x.title)} ↗</a>
+       ${x.excerpt?`<p>${esc(x.excerpt)}</p>`:''}</article>`).join('')}</div></details>`:'';
    host.innerHTML=`<h3>Automatischer Quellen-Radar <span class="radar-beta">FREE</span></h3>
     <div class="radar-stat-row"><div><strong>${rows.length}</strong><span>Regionale Treffer</span></div><div><strong>${seenSources.length}/${sources.filter(s=>s.enabled).length}</strong><span>Quellen erreichbar</span></div></div>
-    <p class="small-muted">Letzter Quellcheck: ${esc(dt(latest))}. ${failed.length?'Einzelne Feeds fehlgeschlagen.':''} Aktualisierung per kostenlosem GitHub-Actions-Zeitplan, sobald die Seite so veröffentlicht wurde.</p>
+    <p class="small-muted">Letzter Quellcheck: ${esc(dt(latest))}. ${stale?'Datenstand älter als 48 Stunden.':''} ${failed.length?'Einzelne Feeds fehlgeschlagen.':''} Angezeigt wird der gespeicherte GitHub-Actions-Datenstand.</p>
     <div class="radar-source-tags">${sourceBadges}</div>
     ${fishs.length?`<div class="radar-fishes"><b>Häufige Fisch-Erwähnungen:</b> ${fishs.map(([n,v])=>`${esc(n)} (${v})`).join(' · ')}</div>`:''}
     ${combinations.length?`<div class="radar-fishes"><b>Wiederkehrende Diskussionskombinationen (mind. 2 Quellen):</b><div>${combinations.map(x=>`${esc(x.fish)} + ${esc(x.theme)}: ${Number(x.mentions)||0} Beiträge aus ${Number(x.source_count)||0} Quellen`).join('<br>')}</div></div>`:''}
     <p class="radar-warning">Erwähnungen ≠ Fänge; Veröffentlichungsmonat ≠ Fangmonat. Keine statistisch gesicherten Wind- oder Saisonkorrelationen.</p>
-    <div class="radar-entries">${rows.map(s=>`<article class="intel-source"><div class="intel-source-meta">AUTO-RSS · ${esc(dt(s.published_at))} · ${esc(s.source_id)} · Relevanz ${Number(s.relevance)||0}/100</div><a href="${esc(/^https:\/\//.test(s.url)?s.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a>${s.excerpt?`<p>${esc(s.excerpt)}</p>`:''}<p class="radar-tags">${esc((s.fish||[]).concat(s.themes||[]).join(' · ')||'Keine klare Fischart')}</p></article>`).join('')}</div>
-    ${!rows.length?'<p class="small-muted">Keine Treffer in dieser Region. Der Datenbestand ist möglicherweise noch leer, oder aktuell wurden keine passenden RSS-Beiträge veröffentlicht.</p>':''}
+    <div class="radar-entries">${rows.map(s=>`<article class="intel-source"><div class="intel-source-meta">AUTO-RSS · ${esc(dt(s.published_at))} · ${esc(s.source_id)} · Textsignal ${Number(s.relevance)||0}/100</div><a href="${esc(/^https:\/\//.test(s.url)?s.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a>${s.excerpt?`<p>${esc(s.excerpt)}</p>`:''}<p class="radar-tags">${esc((s.fish||[]).concat(s.themes||[]).join(' · ')||'Keine klare Fischart')}</p></article>`).join('')}</div>
+    ${broadMarkup}
+    ${!rows.length?'<p class="small-muted">Keine geografisch zugeordneten Treffer in dieser Region. Überregionale Artikel sind keine Spot-Belege.</p>':''}
     <button class="radar-refresh" type="button">Quellenstatus neu laden</button>`;
    host.querySelector('.radar-refresh')?.addEventListener('click',()=>loadRadar(host,region));
  } catch(err) {
