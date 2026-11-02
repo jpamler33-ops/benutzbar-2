@@ -33,7 +33,7 @@ def check_profile():
         code = response.status
     result = json.loads(payload)
     if code != 200 or not isinstance(result, list) or len(result) < 5 or sum(
-        isinstance(n, (int, float)) and n >= 0 for n in result
+        isinstance(n, (int, float)) and n < 0 for n in result
     ) < 5:
         raise ValueError('EMODnet REST response invalid: type=' + type(result).__name__ + ', sample=' + repr(str(result)[:350]))
     if cors not in ('*', ORIGIN):
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         try:
             check()
         except (HTTPError, URLError, TimeoutError, OSError, ValueError, TypeError) as exc:
-            print(f'WARN {name}: {type(exc).__name__}: {str(exc)[:160]}')
+            print(f'WARN {name}: {type(exc).__name__}: {str(exc)[:800]}')
             failures.append(name)
     if failures:
         raise SystemExit('Live EMODnet unavailable or browser-incompatible: ' + ', '.join(failures))
