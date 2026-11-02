@@ -55,6 +55,10 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Static app, PWA and public feed security
         run: python scripts/quality_gate.py
+      - name: Diagnose candidate public coastal RSS feeds
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: python scripts/probe_candidates.py
       - name: Daily live website and weather source probes
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python scripts/live_probe.py
