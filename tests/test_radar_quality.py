@@ -95,5 +95,60 @@ class RadarQuality(unittest.TestCase):
             finally: db.close()
 
 
+    def test_portal_only_shore_category_and_no_fake_place(self):
+        source=next(s for s in radar.load_sources(ROOT/'scripts'/'sources.json')
+                    if s['id']=='naudici_shore')
+        self.assertTrue(source['enabled'])
+        self.assertTrue(source['editorial_adriatic'])
+        xml=b'''<rss><channel>
+          <item><title>CAR NA NIZ OD PEDLJA</title>
+            <link>https://naudici.com/sea-article-a/</link>
+            <description>Prica o morskom ribolovu na Jadranu</description>
+            <category>Ribolov s obale</category><category>zubatac</category></item>
+          <item><title>KRUNAS VANKA MLJETA</title>
+            <link>https://naudici.com/boat-b/</link>
+            <description>Ribolov iz barke</description><category>Jigging</category>
+            <category>Ribolov iz barke</category></item>
+          <item><title>PRODAJA STAPOVA</title>
+            <link>https://naudici.com/gear-c/</link>
+            <category>Ribolov s obale</category><description>vends rod</description></item>
+          </channel></rss>'''
+        rows=radar.parse_feed(xml,source)
+        self.assertEqual(1,len(rows))
+        self.assertEqual([],rows[0]['regions'])
+        self.assertEqual([],rows[0]['countries'])
+        self.assertEqual(0,rows[0]['relevance'])
+        self.assertIn('Dentex',rows[0]['fish'])
+        # A country of publication or a fish tag cannot become a proven catch location.
+        self.assertEqual(1,len(update_free_feed.revalidate_previous(rows,[source])))
+        with tempfile.TemporaryDirectory() as d:
+            db=radar.connect(Path(d)/'test.sqlite')
+            try:
+                def fetch(url,limit=None): return xml
+                result=radar.sync_one(db,source,fetcher=fetch,
+                                      robots_checker=lambda s:True)
+                self.assertEqual('ok',result['status'])
+                row=db.execute('SELECT fetched,stored FROM syncs ORDER BY id DESC LIMIT 1').fetchone()
+                self.assertEqual(3,row['fetched']) # Raw RSS items, not matching posts
+                self.assertEqual(1,row['stored'])
+            finally: db.close()
+
+    def test_portal_geo_location_requires_real_place(self):
+        source=next(s for s in radar.load_sources(ROOT/'scripts'/'sources.json')
+                    if s['id']=='naudici_shore')
+        xml=b'''<rss><channel><item>
+          <title>Rovinj brancin s obale</title>
+          <link>https://naudici.com/real-geo/</link>
+          <description>Rockfishing u moru kod Rovinja.</description>
+          <category>Ribolov s obale</category>
+          <category>brancin</category>
+          </item></channel></rss>'''
+        rows=radar.parse_feed(xml,source)
+        self.assertEqual(1,len(rows))
+        self.assertEqual(['istria'],rows[0]['regions'])
+        self.assertEqual(['HR'],rows[0]['countries'])
+        self.assertGreater(rows[0]['relevance'],0)
+
+
 if __name__ == '__main__':
     unittest.main()
