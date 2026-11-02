@@ -41,6 +41,15 @@ def assert_valid_iso(raw, *, name):
     if stamp.tzinfo is None:
         raise AssertionError(f'{name} lacks timezone')
 
+def acceptable_article_labels(item, source, classified):
+    """Only category-vetted editorials may be unlocated; no invented score."""
+    if classified['relevant']:
+        return classified['regions'] == item.get('regions')
+    return bool(source and source.get('enabled') and
+                source.get('editorial_adriatic') and source.get('allowed_categories') and
+                item.get('regions') == [] and item.get('countries') == [] and
+                item.get('relevance') == 0)
+
 def check():
     for relative in REQUIRED:
         if not (ROOT / relative).is_file():
@@ -63,6 +72,7 @@ def check():
         raise AssertionError('Source ID missing')
     sys.path.insert(0, str(ROOT / 'scripts'))
     import radar
+    config = {s['id']:s for s in radar.load_sources(ROOT / 'scripts' / 'sources.json') if s.get('enabled')}
     unique = set()
     for item in public['articles']:
         if not isinstance(item, dict):
@@ -74,16 +84,17 @@ def check():
         if not isinstance(uid, str) or not uid or uid in unique:
             raise AssertionError('Duplicate or missing article ID')
         unique.add(uid)
+        source_id = item.get('source_id')
+        if source_id not in allowed_sources or source_id not in config:
+            raise AssertionError(f'Unknown or disabled article source: {source_id}')
         checked = radar.classify(item.get('title') or '', item.get('excerpt') or '', item.get('published_at'))
-        if not checked['relevant']:
-            raise AssertionError(f'Irrelevant RSS entry in public feed: {uid}')
-        if checked['regions'] != item.get('regions'):
-            raise AssertionError(f'RSS entry region tags inconsistent: {uid}')
-        if item.get('source_id') not in allowed_sources:
-            raise AssertionError(f'Unknown article source: {item.get("source_id")}')
+        if not acceptable_article_labels(item, config[source_id], checked):
+            raise AssertionError(f'Unjustified RSS classification: {uid}')
         url = urlsplit(item.get('url') or '')
-        if url.scheme != 'https' or not url.hostname or url.username or url.password:
-            raise AssertionError(f'Unsafe article URL for {uid}')
+        source_host = (urlsplit(config[source_id]['feed_url']).hostname or '').lower().removeprefix('www.')
+        if (url.scheme != 'https' or not url.hostname or url.username or url.password or
+                url.hostname.lower().removeprefix('www.') != source_host):
+            raise AssertionError(f'Unsafe or off-source article URL for {uid}')
         if not isinstance(item.get('title'), str) or not item['title'].strip():
             raise AssertionError(f'Empty title: {uid}')
         assert_valid_iso(item.get('published_at'), name=f'article.{uid}.published_at')
