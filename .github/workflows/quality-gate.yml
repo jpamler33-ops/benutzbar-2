@@ -55,6 +55,8 @@ jobs:
         run: node tests/test_map.js
       - name: Radar UI regression (no paid browser service)
         run: node tests/test_radar_ui.js
+      - name: Private catches export/import regression
+        run: node tests/test_private_backup.js
       - name: Python syntax
         run: python -m compileall -q scripts
       - name: RSS precision and regression tests
