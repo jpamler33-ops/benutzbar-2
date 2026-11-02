@@ -16,7 +16,7 @@ PROFILE = 'https://rest.emodnet-bathymetry.eu/depth_profile?' + urlencode({
 })
 WMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms?' + urlencode({
     'service': 'WMS', 'version': '1.3.0', 'request': 'GetMap',
-    'layers': 'eusm2025_subs_400', 'styles': '', 'format': 'image/png',
+    'layers': 'eusm2025_eunis2019_400', 'styles': '', 'format': 'image/png',
     'transparent': 'true', 'crs': 'EPSG:4326',
     'bbox': '43.500000,16.400000,43.600000,16.500000',
     'width': '128', 'height': '128'
