@@ -36,7 +36,8 @@ function depthUrl(lat,lon,bearing,distanceM) {
 }
 function parseProfile(data,distanceM) {
   if (!Array.isArray(data) || data.length > 10000) throw Error('Profilantwort hat kein gültiges Rasterformat');
-  const values = data.map(v => isNumber(v) && v >= 0 && v < 12000 ? v : null);
+  // DTM elevation: negative values are below LAT (water); >= 0 is land/unknown.
+  const values = data.map(v => isNumber(v) && v < 0 && v > -12000 ? -v : null);
   const measured = values.filter(isNumber);
   // Missing raster cells are unknown, not a plausible sea-floor gradient.
   // A few valid cells in a mostly empty transect must not produce a "confirmed" range.
@@ -115,7 +116,7 @@ function attachSpot(spot,region){
     let html='';
     if(depth.status==='fulfilled'){
       const p=depth.value;
-      html+=p.complete?`<div class="geo-metrics"><div><b>${p.min.toFixed(1)}–${p.max.toFixed(1)} m</b><small>Rastertiefen entlang Profil</small></div><div><b>${p.delta.toFixed(1)} m</b><small>Spannweite, keine Steigung</small></div><div><b>${p.count}/${p.total}</b><small>gültige Rasterpunkte · ${Math.round(p.coverage*100)} %</small></div></div>${profileChart(p)}<p class="geo-hint">Tiefe wird nach unten größer. Rechnerischer Profil-Stützpunktabstand ca. ${p.spacingM?.toFixed(0)??"?"} m; tatsächliche Rasterauflösung unbekannt. Küstennahe Genauigkeit begrenzt.</p>`:`<div class="geo-warning">Nicht ausreichend abgedeckt: ${p.count}/${p.total} verwertbare Rasterpunkte (${Math.round(p.coverage*100)} %). Für ein Profil brauchen wir mindestens 5 Werte und 75 % Abdeckung. Land, Modelllücken oder geringe Auflösung möglich. Keine Kante bestätigt.</div>`;
+      html+=p.complete?`<div class="geo-metrics"><div><b>${p.min.toFixed(1)}–${p.max.toFixed(1)} m</b><small>Rastertiefen entlang Profil</small></div><div><b>${p.delta.toFixed(1)} m</b><small>Spannweite, keine Steigung</small></div><div><b>${p.count}/${p.total}</b><small>gültige Rasterpunkte · ${Math.round(p.coverage*100)} %</small></div></div>${profileChart(p)}<p class="geo-hint">Tiefe wird nach unten größer. Tiefenwerte (negative Höhen in positive Wassertiefe umgerechnet). Rechnerischer Profil-Stützpunktabstand ca. ${p.spacingM?.toFixed(0)??"?"} m; tatsächliche Rasterauflösung unbekannt. Küstennahe Genauigkeit begrenzt.</p>`:`<div class="geo-warning">Nicht ausreichend abgedeckt: ${p.count}/${p.total} verwertbare Rasterpunkte (${Math.round(p.coverage*100)} %). Für ein Profil brauchen wir mindestens 5 Werte und 75 % Abdeckung. Land, Modelllücken oder geringe Auflösung möglich. Keine Kante bestätigt.</div>`;
     }else{
       html+=`<div class="geo-warning">Tiefenprofil nicht abrufbar (${clean(depth.reason?.name==='TypeError'?'Netzwerk/CORS':depth.reason?.message||'Dienst nicht verfügbar')}). <a href="${clean(profileLink)}" target="_blank" rel="noopener noreferrer">EMODnet-Abfrage separat öffnen</a>.</div>`;
     }
