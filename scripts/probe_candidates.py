@@ -13,11 +13,6 @@ import radar
 
 CANDIDATES = (
     ('Na Udici – Jadran portal', 'https://naudici.com/feed/'),
-    ('Na Udici – shore fishing category', 'https://naudici.com/ribolov-s-obale/feed/'),
-    ('Na Udici – shore spinning category', 'https://naudici.com/spinning/feed/'),
-    ('Slovenian sea-fishing forum – phpBB feed', 'https://morski-ribolov.net/feed.php'),
-    ('Slovenian sea-fishing forum – app.php feed', 'https://morski-ribolov.net/app.php/feed'),
-    ('Croatian maritime forum – RSS', 'https://www.ribolovnamoru.eu/public/index.rss'),
 )
 
 def inspect(name, url):
@@ -35,7 +30,7 @@ def inspect(name, url):
               (root.tag, total, len(valid), len(raw)),flush=True)
         for item in root.findall('.//item')[:8]:
             title=(item.findtext('title') or '').strip()
-            print('SAMPLE_HEADLINE:',title[:110],flush=True)
+            print('SAMPLE_HEADLINE:',title[:110], 'CATEGORIES:', [e.text for e in item.findall('category')][:8], flush=True)
         for row in valid[:3]:
             print('SAMPLE_MATCH:',row['title'][:100],'; regions=',row['regions'],flush=True)
     except Exception as exc:
