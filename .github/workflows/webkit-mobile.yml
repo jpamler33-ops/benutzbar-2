@@ -1,0 +1,40 @@
+name: COASTFINDER Mobile WebKit 10x
+on:
+  pull_request:
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'tests/**'
+      - '.github/workflows/webkit-mobile.yml'
+  push:
+    branches: [main]
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'tests/**'
+      - '.github/workflows/webkit-mobile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: coastfinder-webkit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mobile-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout existing COASTFINDER
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned free Playwright and WebKit browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps webkit
+      - name: Ten real WebKit engine iPhone-sized mobile browser cycles
+        run: node tests/webkit_mobile_10x.js
