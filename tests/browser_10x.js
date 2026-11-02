@@ -39,6 +39,32 @@ async function desktop(browser,url,round){
  await page.goto(url);await page.waitForFunction(()=>document.getElementById('online-status').textContent.includes('BEREIT'));
  check('Kartenkacheln',await page.locator('#tiles img').count()>2);
  const box=await page.locator('#map').boundingBox();check('Kartenlayout',box.width>400&&box.height>250);
+ const invariants=await page.evaluate(()=>{
+   const g=window.CoastGeo,c=window.CoastIntel,st=window.CoastFreeStore,t=window.__COASTFINDER_TEST__;
+   const throwCheck=fn=>{try{fn();return false;}catch{return true;}};
+   const projection=t.project(44.87,13.85,12),back=t.unproject(projection.x,projection.y,12);
+   const valid=st.validate({source_kind:'own',region:'istria',fish:'Wolfsbarsch',catches:0,effort_hours:2,method:'Spinnfischen',caught_at_utc:'2026-11-01T12:00:00Z',lat:44.87,lon:13.85,note:''});
+   const sparse=g.parseProfile([null,null,-4,null,null,-8,null,null,-11],500);
+   const full=g.parseProfile([-4,-6,-8,-10,-12,-14],500);
+   localStorage.setItem('coastfinder:free:catches:v1','invalid-json');
+   const recovers=st.asArray().length===0;localStorage.removeItem('coastfinder:free:catches:v1');
+   return {
+    'Geo coordinate validation':throwCheck(()=>g.depthUrl(91,13,45,500)),
+    'Geo profile missing-data guard':!sparse.complete&&sparse.delta===null,
+    'Geo negative depth parsing':full.complete&&full.min===4&&full.max===14,
+    'Geo destination bearing':Number.isFinite(g.destination(44.87,13.85,90,500).lon),
+    'OSM projection reversible':Math.abs(back.lat-44.87)<.000001&&Math.abs(back.lon-13.85)<.000001,
+    'OSM map source deduplication':t.parseOSM([{type:'node',id:77,lat:44.87,lon:13.85,tags:{natural:'rock'}},{type:'node',id:77,lat:44.87,lon:13.85,tags:{natural:'rock'}}]).length===1,
+    'Weather missing-data honesty':c.assess({wind:12,wave:null}).burden===null,
+    'Season and compass wrap':c.season(1)==='Winter'&&c.diff(359,1)===2,
+    'Weather API URLs':c.urls(44.87,13.85,'HR').marine.startsWith('https:'),
+    'Private catch validation':!!valid.id&&valid.lat===44.87,
+    'Null-catch descriptive stats':st.stats([valid]).groups[0].zero_sessions===1,
+    'Reject insecure external reports':throwCheck(()=>st.validate({...valid,source_kind:'external',source_url:'http://unsafe.example/'})),
+    'Local storage corruption recovery':recovers
+   };
+ });
+ for(const [name,pass] of Object.entries(invariants))check(name,pass);
  const old=await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom);
  await page.locator('#zoom-plus').click();check('Zoom +',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)===old+1);
  await page.locator('#zoom-minus').click();check('Zoom -',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)===old);
@@ -48,6 +74,9 @@ async function desktop(browser,url,round){
  const regions=await page.locator('.region-tab').count();assert(regions>=7);
  for(let i=0;i<regions;i++)await page.locator('.region-tab').nth(i).click();
  check('Regionswahl alle 7',await page.evaluate(()=>__COASTFINDER_TEST__.getState().region.id)==='riviera');
+ await page.locator('#locate').click();
+ await page.waitForFunction(()=>Math.abs(__COASTFINDER_TEST__.getState().lat-44.87)<.001);
+ check('User geolocation with explicit permission',true);
  await page.locator('.region-tab').first().click();
  await page.locator('#analyze').click();await page.waitForFunction(()=>__COASTFINDER_TEST__.getState().analyzed);
  check('Küstenanalyse',await page.locator('#spot-list .spot-card').count()>=3);
@@ -71,6 +100,8 @@ async function desktop(browser,url,round){
  await page.locator('.nav-tab[data-tab="forum"]').click();await page.waitForSelector('.radar-unlocated');
  check('Foren-Radar',await page.locator('.radar-entries article').count()>=1);
  check('Nicht verortete Quellen getrennt',await page.locator('.radar-unlocated').count()===1);
+ check('RSS title HTML escaping',await page.locator('.radar-unlocated script').count()===0&&
+   (await page.locator('.radar-unlocated').innerHTML()).includes('&lt;script&gt;'));
  await page.locator('.nav-tab[data-tab="catches"]').click();await page.locator('#catch-new summary').click();
  await page.locator('[name="fish"]').fill('Wolfsbarsch');await page.locator('[name="catches"]').fill('0');await page.locator('[name="effort_hours"]').fill('2');
  await page.locator('[name="local_time"]').fill(new Date(Date.now()-3*86400000).toISOString().slice(0,16));
