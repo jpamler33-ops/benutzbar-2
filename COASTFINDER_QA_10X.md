@@ -25,3 +25,14 @@ Der zusätzliche Karten-Roundtrip-Test fand einen schwerwiegenden Fehler in `app
 **Nicht getestet:** echtes iPhone Safari/WebKit, vollständige WCAG-Barrierefreiheit, sämtliche internen Funktionen außerhalb der geprüften Nutzerpfade, Last-/Rate-Limits im echten Mehrnutzerbetrieb, Langzeit-Datenhaltbarkeit bei Browserdaten-Löschung oder zehn unabhängige Echtaufrufe der externen Dienste. Der unabhängige Live-API-Diagnose-Workflow bleibt separat bestehen.
 
 Die 48 gezählten Gruppen sind **Funktionsbereiche/Assertions**, nicht 48 verifizierte, unabhängig ausgelöste Drittanbieter-API-Vorgänge. Ein erfolgreicher GitHub-Pages-Deploymentlauf bedeutet nicht automatisch einen erfolgreichen Gerätetest.
+
+
+## 02.11.2026 – zusätzlicher Safari-Engine/WebKit-Gate (PR #9)
+
+**Echter WebKit-Engine-Test, nicht echte iPhone-Hardware.** Der neue kostenlose GitHub-Actions-Workflow `.github/workflows/webkit-mobile.yml` installiert den Playwright-1.56.1-WebKit-Browser auf fest gepinntem Ubuntu 24.04 und führt `tests/webkit_mobile_10x.js` zehnmal aus. Er wechselt zwischen 390×844 und 375×667 Pixeln (je fünf Browserdurchgänge). Mobile Touch-Steuerelemente, OpenStreetMap-Kacheln und Referer-Richtlinie, Kartendarstellung, Karten-Pan, Regionen, Overpass-Analyse, Tiefen-/EUSeaMap-Layer, RSS und private lokale Fangdatenspeicherung nach Reload sind enthalten. Externe Anfragen werden kontrolliert simuliert und nicht zehnmal an öffentliche APIs gesendet.
+
+**Aufgedeckter Bedienfehler:** Der bestehende mobile Ergebnisauszug wurde bis zu 75dvh hoch und verdeckte nach einer Analyse den darüberliegenden Tiefenkarten-Schalter. Im echten WebKit-Test scheiterte `locator.tap()`, weil das Element `#analyze` im ausgeklappten Drawer Klicks abfing. Korrektur: Die maximale Drawer-Höhe lässt einen sichtbaren Kartenbereich von 160 px und die Layer-Schaltflächen werden bei expandiertem Fenster kompakt in diesen freien Bereich gesetzt; Quellattribution bleibt sichtbar.
+
+**Bestätigte PR-Tests:** WebKit zehn Runden und sechzehn Verhaltensgruppen pro Runde: https://github.com/jpamler33-ops/benutzbar-2/actions/runs/41521813928 (`WEBKIT_MOBILE_ALL_PASS`); Chrome zehn Browserrunden plus zehn Offline-Regressionsrunden: https://github.com/jpamler33-ops/benutzbar-2/actions/runs/41521813956. Standard-Qualitätsprüfung ebenfalls erfolgreich. Das sind **160 zusätzliche WebKit-Assertions** neben bestehenden Tests.
+
+**Grenzen:** WebKit auf Linux ist eine Safari-Engine-Annäherung, keine native iOS-Safari-Ausführung; echte Netzwerkprobleme, Betriebssystem-Berechtigungen, Hardware-Touch und vollständige Barrierefreiheit bleiben gesondert zu überprüfen. Keine Behauptung realer Drittanbieter-API-Verfügbarkeit aus diesen Netzwerkmocks.
