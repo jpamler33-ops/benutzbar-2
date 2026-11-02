@@ -46,7 +46,9 @@ jobs:
         run: |
           for script in *.js; do node --check "$script"; done
       - name: Geo model regression tests
-        run: node tests/test_geo.js
+        run: |
+          node tests/test_geo.js
+          node tests/test_geo_quality.js
       - name: Python syntax
         run: python -m compileall -q scripts
       - name: RSS precision and regression tests
@@ -56,3 +58,8 @@ jobs:
       - name: Daily live website and weather source probes
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python scripts/live_probe.py
+      - name: EMODnet live data and browser CORS diagnostics
+        # External provider outages are recorded as warnings, not software test failures.
+        if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: python scripts/geo_live_probe.py

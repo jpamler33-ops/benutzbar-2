@@ -1,0 +1,28 @@
+'use strict';
+const assert = require('node:assert/strict');
+const geo = require('../coast-geo.js');
+const good = geo.parseProfile([-3, -5, null, -7, -12, -14, -20, -22], 500);
+assert.equal(good.complete, true);
+assert.equal(good.count, 7);
+assert.equal(good.total, 8);
+assert.equal(good.coverage, .875);
+assert.equal(good.spacingM, 500/7);
+assert.equal(good.delta, 19);
+const sparse = geo.parseProfile([null,null,-1,null,-2,null,null,-3,null,null,-4,null,-5], 500);
+assert.equal(sparse.complete, false, 'Five scattered values are not enough');
+assert.equal(sparse.min, null, 'No min/max on incomplete results');
+assert.equal(sparse.delta, null);
+assert(sparse.coverage < .75);
+const partial = geo.parseProfile([-3,-4,-5,-6,-7, null, null],250);
+assert.equal(partial.complete, false, '70% coverage is insufficient');
+const empty = geo.parseProfile([], 250);
+assert.equal(empty.complete, false);
+assert.equal(empty.coverage,0);
+assert.equal(empty.spacingM,null);
+assert.equal(geo.parseProfile([-1,-2,-3,-4,-5],1000).complete,true);
+console.log('GEO_COVERAGE_REGRESSION_OK');
+
+const land = geo.parseProfile([1,2,3,4,5,6,7],500);
+assert.equal(land.complete, false, 'Positive elevation must not be mistaken for underwater depth');
+const mixed = geo.parseProfile([-1,-2,-3,-4,-5,9,7,6],500);
+assert.equal(mixed.complete, false, 'Land cells must reduce sea coverage');

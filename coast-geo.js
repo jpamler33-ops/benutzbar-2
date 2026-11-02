@@ -1,4 +1,4 @@
-/* COASTFINDER Geo Intelligence: depth transects + EUSeaMap substrate overlay.
+/* COASTFINDER Geo Intelligence: depth transects + EUSeaMap modeled habitat overlay.
    Static browser app, no backend, no key, no inferred fish/catch probability.
    External models are coarse. Users must choose the seaward bearing themselves. */
 (function(root, factory) {
@@ -10,7 +10,7 @@
 const root=typeof globalThis!=='undefined'?globalThis:{};
 const DEPTH_ENDPOINT = 'https://rest.emodnet-bathymetry.eu/depth_profile';
 const HABITAT_ENDPOINT = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
-const HABITAT_LAYER = 'eusm2025_subs_400';
+const HABITAT_LAYER = 'eusm2025_eunis2019_400';
 const CACHE_MS = 30 * 60 * 1000;
 const depthCache = new Map();
 const directions = [['N',0],['NO',45],['O',90],['SO',135],['S',180],['SW',225],['W',270],['NW',315]];
@@ -36,11 +36,18 @@ function depthUrl(lat,lon,bearing,distanceM) {
 }
 function parseProfile(data,distanceM) {
   if (!Array.isArray(data) || data.length > 10000) throw Error('Profilantwort hat kein gültiges Rasterformat');
-  const values = data.map(v => isNumber(v) && v >= 0 && v < 12000 ? v : null);
+  // DTM elevation: negative values are below LAT (water); >= 0 is land/unknown.
+  const values = data.map(v => isNumber(v) && v < 0 && v > -12000 ? -v : null);
   const measured = values.filter(isNumber);
-  if (measured.length < 5) return {values, count:measured.length,total:values.length,complete:false, min:null,max:null,delta:null,distanceM};
+  // Missing raster cells are unknown, not a plausible sea-floor gradient.
+  // A few valid cells in a mostly empty transect must not produce a "confirmed" range.
+  const count = measured.length, total = values.length;
+  const coverage = total ? count / total : 0;
+  const spacingM = total > 1 ? distanceM / (total - 1) : null;
+  const complete = count >= 5 && coverage >= 0.75;
+  if (!complete) return {values,count,total,coverage,spacingM,complete:false,min:null,max:null,delta:null,distanceM};
   const min = Math.min(...measured), max = Math.max(...measured);
-  return {values,count:measured.length,total:values.length,complete:true,min,max,delta:max-min,distanceM};
+  return {values,count,total,coverage,spacingM,complete:true,min,max,delta:max-min,distanceM};
 }
 async function fetchDepth(lat,lon,bearing,distanceM,signal) {
   const url = depthUrl(lat,lon,bearing,distanceM), now = Date.now();
@@ -92,7 +99,7 @@ function attachSpot(spot,region){
   const host=document.querySelector('#detail-panel .section-body');
   if (!host || !isNumber(spot.lat) || !isNumber(spot.lon)) return;
   const section=document.createElement('section');section.className='geo-intel';
-  section.innerHTML=`<div class="intel-label">COAST GEO · ECHTE RASTERDATEN</div><h3>Tiefenprofil + Meeresboden + Wetter</h3><p class="geo-hint">Wähle selbst die Richtung vom Kartenpunkt ins Meer. Die App kennt keine sichere Küstennormale. Profile können über Land oder durch Buchten führen.</p><div class="geo-settings"><label>Profilrichtung<select class="geo-bearing" aria-label="Richtung des Tiefenprofils">${directions.map(([label,deg])=>`<option value="${deg}">${label} (${deg}°)</option>`).join('')}</select></label><label>Distanz<select class="geo-distance" aria-label="Länge des Tiefenprofils"><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1000 m</option></select></label></div><button class="intel-action geo-run" type="button">Tiefenprofil + Wetter analysieren</button><button class="geo-show-layer" type="button">Bodenkarte auf der Karte anzeigen</button><div class="geo-reading" aria-live="polite"></div><p class="geo-credit">Quellen: <a target="_blank" rel="noopener noreferrer" href="https://rest.emodnet-bathymetry.eu/">EMODnet Bathymetry</a> · <a target="_blank" rel="noopener noreferrer" href="https://emodnet.ec.europa.eu/en/seabed-habitats">EMODnet Seabed Habitats</a> · <a target="_blank" rel="noopener noreferrer" href="https://open-meteo.com/en/docs/marine-weather-api">Open-Meteo</a>. Keine Fangwahrscheinlichkeit, keine geprüfte Ufertiefe, keine Sicherheitsfreigabe.</p>`;
+  section.innerHTML=`<div class="intel-label">COAST GEO · ECHTE RASTERDATEN</div><h3>Tiefenprofil + Lebensraumkarte + Wetter</h3><p class="geo-hint">Wähle selbst die Richtung vom Kartenpunkt ins Meer. Die App kennt keine sichere Küstennormale. Profile können über Land oder durch Buchten führen.</p><div class="geo-settings"><label>Profilrichtung<select class="geo-bearing" aria-label="Richtung des Tiefenprofils">${directions.map(([label,deg])=>`<option value="${deg}">${label} (${deg}°)</option>`).join('')}</select></label><label>Distanz<select class="geo-distance" aria-label="Länge des Tiefenprofils"><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1000 m</option></select></label></div><button class="intel-action geo-run" type="button">Tiefenprofil + Wetter analysieren</button><button class="geo-show-layer" type="button">Lebensraumkarte anzeigen</button><div class="geo-reading" aria-live="polite"></div><p class="geo-credit">Quellen: <a target="_blank" rel="noopener noreferrer" href="https://rest.emodnet-bathymetry.eu/">EMODnet Bathymetry</a> · <a target="_blank" rel="noopener noreferrer" href="https://emodnet.ec.europa.eu/en/seabed-habitats">EMODnet Seabed Habitats</a> · <a target="_blank" rel="noopener noreferrer" href="https://open-meteo.com/en/docs/marine-weather-api">Open-Meteo</a>. Keine Fangwahrscheinlichkeit, keine geprüfte Ufertiefe, keine Sicherheitsfreigabe.</p>`;
   host.appendChild(section);
   section.querySelector('.geo-show-layer').onclick=()=>{const btn=document.getElementById('habitat-btn');if(btn?.getAttribute('aria-pressed')!=='true')btn?.click();document.getElementById('drawer')?.classList.remove('expanded');};
   const button=section.querySelector('.geo-run'),reading=section.querySelector('.geo-reading');
@@ -109,7 +116,7 @@ function attachSpot(spot,region){
     let html='';
     if(depth.status==='fulfilled'){
       const p=depth.value;
-      html+=p.complete?`<div class="geo-metrics"><div><b>${p.min.toFixed(1)}–${p.max.toFixed(1)} m</b><small>Rastertiefen entlang Profil</small></div><div><b>${p.delta.toFixed(1)} m</b><small>Spannweite, keine Steigung</small></div><div><b>${p.count}/${p.total}</b><small>gültige Rasterpunkte</small></div></div>${profileChart(p)}<p class="geo-hint">Tiefe wird nach unten größer. Auflösung und Genauigkeit in Küstennähe begrenzt.</p>`:`<div class="geo-warning">Zu wenige verwertbare Tiefenwerte (${p.count}). Profil könnte über Land liegen oder außerhalb der Abdeckung verlaufen. Keine Kante bestätigt.</div>`;
+      html+=p.complete?`<div class="geo-metrics"><div><b>${p.min.toFixed(1)}–${p.max.toFixed(1)} m</b><small>Rastertiefen entlang Profil</small></div><div><b>${p.delta.toFixed(1)} m</b><small>Spannweite, keine Steigung</small></div><div><b>${p.count}/${p.total}</b><small>gültige Rasterpunkte · ${Math.round(p.coverage*100)} %</small></div></div>${profileChart(p)}<p class="geo-hint">Tiefe wird nach unten größer. Tiefenwerte (negative Höhen in positive Wassertiefe umgerechnet). Rechnerischer Profil-Stützpunktabstand ca. ${p.spacingM?.toFixed(0)??"?"} m; tatsächliche Rasterauflösung unbekannt. Küstennahe Genauigkeit begrenzt.</p>`:`<div class="geo-warning">Nicht ausreichend abgedeckt: ${p.count}/${p.total} verwertbare Rasterpunkte (${Math.round(p.coverage*100)} %). Für ein Profil brauchen wir mindestens 5 Werte und 75 % Abdeckung. Land, Modelllücken oder geringe Auflösung möglich. Keine Kante bestätigt.</div>`;
     }else{
       html+=`<div class="geo-warning">Tiefenprofil nicht abrufbar (${clean(depth.reason?.name==='TypeError'?'Netzwerk/CORS':depth.reason?.message||'Dienst nicht verfügbar')}). <a href="${clean(profileLink)}" target="_blank" rel="noopener noreferrer">EMODnet-Abfrage separat öffnen</a>.</div>`;
     }
@@ -118,7 +125,7 @@ function attachSpot(spot,region){
       html+=h?`<div class="geo-weather"><b>Nächste Modellstunde · ${clean(h.time.replace('T',' '))}</b><p>Wind ${isNumber(h.wind)?h.wind.toFixed(0)+' km/h':'–'} · Wellen ${isNumber(h.wave)?h.wave.toFixed(1)+' m':'–'} · Strömung ${isNumber(h.current)?h.current.toFixed(2)+' km/h':'–'} · Oberflächentemperatur ${isNumber(h.sst)?h.sst.toFixed(1)+' °C':'–'}</p><p>Modellbelastung: ${h.assessment?.burden===null||h.assessment?.burden===undefined?'nicht berechenbar':h.assessment.burden+'/100'} (keine Fangchance).</p></div>`:'<div class="geo-warning">Keine aktuelle Modellstunde verfügbar.</div>';
       if(weather.value.errors?.length)html+=`<p class="geo-hint">Teilweise fehlend: ${clean(weather.value.errors.join(' · '))}</p>`;
     }else html+=`<div class="geo-warning">Wetter-/Meeresmodelle nicht verfügbar: ${clean(weather.reason?.message||'Fehler')}. Kein Ersatzwert erzeugt.</div>`;
-    html+=`<p class="geo-hint">Bodenart nur als separater EUSeaMap-Kartenlayer sichtbar; ohne punktgenaue Klassifikation kein Fels-/Sand-Nachweis für diesen Pin. Für Weg, Verbote, Brandung und Sicherheit gelten lokale Quellen.</p>`;
+    html+=`<p class="geo-hint">EUSeaMap EUNIS 2019 zeigt modellierte Meeresboden-Lebensräume, keine direkte Substratmessung. Keine punktgenaue Fels-/Sand-Bestätigung für diesen Pin. Für Weg, Verbote, Brandung und Sicherheit gelten lokale Quellen.</p>`;
     reading.innerHTML=html;button.disabled=false;
   };
 }
@@ -126,7 +133,7 @@ function enableMapLayer(){
   const map=document.getElementById('map'),bathymetry=document.getElementById('bathy'),bathyBtn=document.getElementById('bathy-btn'),parent=document.querySelector('.map-layers');
   if(!map||!bathymetry||!bathyBtn||!parent)return;
   const layer=document.createElement('img');layer.className='habitat-wms';layer.alt='';layer.draggable=false;layer.hidden=true;map.insertBefore(layer,document.getElementById('markers'));
-  const btn=document.createElement('button');btn.type='button';btn.id='habitat-btn';btn.className='layer-btn';btn.setAttribute('aria-pressed','false');btn.innerHTML='<span class="layer-icon">≋</span> Bodenkarte <span class="switch"></span>';
+  const btn=document.createElement('button');btn.type='button';btn.id='habitat-btn';btn.className='layer-btn';btn.setAttribute('aria-pressed','false');btn.innerHTML='<span class="layer-icon">≋</span> Lebensräume <span class="switch"></span>';
   const status=document.createElement('span');status.className='geo-layer-status';status.setAttribute('aria-live','polite');
   parent.append(btn,status);
   let enabled=false,lastUrl='';
@@ -137,9 +144,9 @@ function enableMapLayer(){
     if(!bbox)return;
     let url;try{url=habitatUrl(bbox,map.clientWidth,map.clientHeight);}catch{layer.hidden=true;status.textContent='Kartenbereich ungültig';return;}
     if(url===lastUrl)return;lastUrl=url;
-    layer.hidden=false;layer.src=url;status.textContent='EUSeaMap 2025 · Modellkarte';
+    layer.hidden=false;layer.src=url;status.textContent='EUSeaMap 2025 · modellierte Habitate';
   }
-  layer.onerror=()=>{layer.hidden=true;status.textContent='Bodenkarte nicht verfügbar';};
+  layer.onerror=()=>{layer.hidden=true;status.textContent='Lebensraumkarte nicht verfügbar';};
   btn.onclick=()=>{if(enabled){disable();return;}if(bathyBtn.getAttribute('aria-pressed')==='true')bathyBtn.click();enabled=true;btn.setAttribute('aria-pressed','true');sync();};
   bathyBtn.addEventListener('click',()=>{if(bathyBtn.getAttribute('aria-pressed')==='true'&&enabled)disable();});
   root.addEventListener('coastfinder:mapchange',sync);
