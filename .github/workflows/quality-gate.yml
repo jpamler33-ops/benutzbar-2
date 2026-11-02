@@ -49,6 +49,8 @@ jobs:
         run: |
           node tests/test_geo.js
           node tests/test_geo_quality.js
+      - name: Radar UI regression (no paid browser service)
+        run: node tests/test_radar_ui.js
       - name: Python syntax
         run: python -m compileall -q scripts
       - name: RSS precision and regression tests
