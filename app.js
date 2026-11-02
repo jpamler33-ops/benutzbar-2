@@ -18,7 +18,7 @@ function readStore(key,fallback){try {return JSON.parse(localStorage.getItem(key
 function saveStore(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{notify('Speicher voll oder blockiert.');}}
 const state={region:REGIONS[0],lat:REGIONS[0].lat,lon:REGIONS[0].lon,zoom:12,selected:null,results:[],analyzed:false,loading:false,filter:'all',explorer:false,tab:'discover',bathy:false,pinMode:false,viewMoved:false,favs:readStore(STORAGE.favs,{}),pins:readStore(STORAGE.pins,[]),notes:readStore(STORAGE.notes,{})};
 const map=$('map'), tiles=$('tiles'), markers=$('markers'), bathy=$('bathy'), drawer=$('drawer');
-const TILE=256, MAX_ZOOM=18, MIN_ZOOM=3;
+const TILE=256, MAX_ZOOM=18, MIN_ZOOM=3, MAX_MODEL_OVERLAY_ZOOM=13;
 const toRad=x=>x*Math.PI/180;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const mod=(v,n)=>((v%n)+n)%n;
@@ -41,11 +41,35 @@ for(let ix=firstX;ix<=lastX;ix++)for(let iy=firstY;iy<=lastY;iy++){
  markers.replaceChildren();const visible=[...state.results,...state.pins];for(const s of visible){const p=project(s.lat,s.lon,z);let x=p.x-c.x;if(x>n*TILE/2)x-=n*TILE;if(x<-n*TILE/2)x+=n*TILE;x+=width/2;const y=p.y-c.y+height/2;if(x < -28||x>width+28||y < -28||y>height+28)continue;
  const b=document.createElement('button');b.className=`marker ${s.category}${state.selected?.id===s.id?' active':''}`;b.style.left=x+'px';b.style.top=y+'px';b.textContent=META[s.category]?.icon||'●';b.title=`${s.name} – ${s.typeLabel}`;b.setAttribute('aria-label',b.title);b.addEventListener('click',e=>{e.stopPropagation();selectSpot(s);});markers.appendChild(b);}
  $('zoom-info').textContent=`ZOOM ${z} · OPENSTREETMAP`;}
-function updateBathy(){if(!state.bathy)return;const width=Math.round(map.clientWidth),height=Math.round(map.clientHeight);if(width<1||height<1)return;const b=visibleBBox();if(b.w>b.e){bathy.hidden=true;return;}const merc=(lat,lon)=>{const p=project(lat,lon,0);return {x:(p.x/256-.5)*40075016.68557849,y:(.5-p.y/256)*40075016.68557849};};const sw=merc(b.s,b.w),ne=merc(b.n,b.e);const params=new URLSearchParams({service:'WMS',version:'1.1.1',request:'GetMap',layers:'emodnet:mean_multicolour',styles:'',format:'image/png',transparent:'true',srs:'EPSG:3857',bbox:[sw.x,sw.y,ne.x,ne.y].join(','),width:String(Math.min(width,1800)),height:String(Math.min(height,1400))});bathy.src='https://ows.emodnet-bathymetry.eu/wms?'+params;bathy.hidden=false;bathy.onerror=()=>{bathy.hidden=true;notify('EMODnet-Tiefenlayer derzeit nicht erreichbar.');};}
+function updateBathy(){
+  if(!state.bathy)return;
+  // EMODnet's regular grid is ~115 m. At detailed spot zooms the large
+  // raster pixels can obscure land/coast, creating false visual precision.
+  if(state.zoom>MAX_MODEL_OVERLAY_ZOOM){
+    state.bathy=false;bathy.hidden=true;bathy.removeAttribute('src');delete bathy.dataset.url;
+    $('bathy-btn').setAttribute('aria-pressed','false');$('bathy-attribution').hidden=true;
+    showBanner('Grobe Tiefenkarte ab Zoom 14 ausgeblendet. Zoome heraus oder nutze das Tiefenprofil am Spot.');
+    return;
+  }
+  const width=Math.round(map.clientWidth),height=Math.round(map.clientHeight);
+  if(width<1||height<1)return;
+  const b=visibleBBox();if(b.w>b.e){bathy.hidden=true;return;}
+  const merc=(lat,lon)=>{const p=project(lat,lon,0);return {x:(p.x/256-.5)*40075016.68557849,y:(.5-p.y/256)*40075016.68557849};};
+  const sw=merc(b.s,b.w),ne=merc(b.n,b.e);
+  const params=new URLSearchParams({service:'WMS',version:'1.1.1',request:'GetMap',layers:'emodnet:mean_multicolour',styles:'',format:'image/png',transparent:'true',srs:'EPSG:3857',bbox:[sw.x,sw.y,ne.x,ne.y].join(','),width:String(Math.min(width,1800)),height:String(Math.min(height,1400))});
+  const url='https://ows.emodnet-bathymetry.eu/wms?'+params;
+  if(bathy.dataset.url===url)return;
+  // Never show an old viewport overlay under newly moved base-map tiles.
+  bathy.hidden=true;bathy.dataset.url=url;
+  bathy.onload=()=>{if(state.bathy&&bathy.dataset.url===url)bathy.hidden=false;};
+  bathy.onerror=()=>{if(bathy.dataset.url!==url)return;bathy.hidden=true;delete bathy.dataset.url;notify('EMODnet-Tiefenlayer derzeit nicht erreichbar.');};
+  bathy.src=url;
+}
 function moveEnd(){updateBathy();state.viewMoved=true;window.dispatchEvent(new Event('coastfinder:mapchange'));}
+function mapMotion(){if(state.bathy)bathy.hidden=true;window.dispatchEvent(new Event('coastfinder:mapmotion'));}
 let pointers=new Map(),drag=null,longPress=null,wasLongPress=false,pinchDistance=0;
 map.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;map.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){drag={x:e.clientX,y:e.clientY,moved:false};wasLongPress=false;map.classList.add('dragging');longPress=setTimeout(()=>{if(drag&&!drag.moved){const r=map.getBoundingClientRect(),coord=coordForPixel(e.clientX-r.left,e.clientY-r.top);createPin(coord.lat,coord.lon);wasLongPress=true;}},700);}else{clearTimeout(longPress);drag=null;const a=[...pointers.values()];pinchDistance=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}});
-map.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){const dx=e.clientX-old.x,dy=e.clientY-old.y;if(drag&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8){drag.moved=true;clearTimeout(longPress);}pan(dx,dy);}else if(pointers.size===2){const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(Math.abs(d-pinchDistance)>45){const r=map.getBoundingClientRect();zoomTo(state.zoom+(d>pinchDistance?1:-1),{x:(a[0].x+a[1].x)/2-r.left,y:(a[0].y+a[1].y)/2-r.top});pinchDistance=d;}}});
+map.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){const dx=e.clientX-old.x,dy=e.clientY-old.y;if(drag&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8){drag.moved=true;clearTimeout(longPress);}if(dx||dy){mapMotion();pan(dx,dy);}}else if(pointers.size===2){const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(Math.abs(d-pinchDistance)>45){const r=map.getBoundingClientRect();zoomTo(state.zoom+(d>pinchDistance?1:-1),{x:(a[0].x+a[1].x)/2-r.left,y:(a[0].y+a[1].y)/2-r.top});pinchDistance=d;}}});
 function releasePointer(e){if(!pointers.has(e.pointerId))return;const moved=drag?.moved;clearTimeout(longPress);pointers.delete(e.pointerId);map.classList.remove('dragging');if(!moved&&!wasLongPress&&state.pinMode&&pointers.size===0){const r=map.getBoundingClientRect(),p=coordForPixel(e.clientX-r.left,e.clientY-r.top);createPin(p.lat,p.lon);state.pinMode=false;$('pin-btn').classList.remove('active');showBanner('Eigener Pin gespeichert.');}drag=null;moveEnd();}
 map.addEventListener('pointerup',releasePointer);map.addEventListener('pointercancel',releasePointer);
 map.addEventListener('contextmenu',e=>{e.preventDefault();const r=map.getBoundingClientRect(),p=coordForPixel(e.clientX-r.left,e.clientY-r.top);createPin(p.lat,p.lon);});
@@ -55,7 +79,7 @@ map.addEventListener('keydown',e=>{if(['+','='].includes(e.key)){zoomTo(state.zo
 $('zoom-plus').onclick=()=>zoomTo(state.zoom+1);$('zoom-minus').onclick=()=>zoomTo(state.zoom-1);
 $('locate').onclick=()=>{if(!navigator.geolocation){notify('Standortbestimmung nicht unterstützt.');return;}navigator.geolocation.getCurrentPosition(pos=>{setCenter(pos.coords.latitude,pos.coords.longitude);zoomTo(13);moveEnd();notify('Standort auf Karte gesetzt.');},()=>notify('Standort nicht verfügbar oder Berechtigung fehlt.'),{enableHighAccuracy:false,timeout:9000});};
 $('pin-btn').onclick=()=>{state.pinMode=!state.pinMode;$('pin-btn').classList.toggle('active',state.pinMode);showBanner(state.pinMode?'Tippe auf die Karte, um deinen privaten Pin zu setzen.':'Pin-Modus beendet.');};
-$('bathy-btn').onclick=()=>{state.bathy=!state.bathy;$('bathy-btn').setAttribute('aria-pressed',String(state.bathy));$('bathy-attribution').hidden=!state.bathy;if(!state.bathy){bathy.hidden=true;bathy.removeAttribute('src');}else updateBathy();notify(state.bathy?'EMODnet-Tiefendaten (nicht für Navigation).':'Tiefenkarte ausgeblendet.');};
+$('bathy-btn').onclick=()=>{if(!state.bathy&&state.zoom>MAX_MODEL_OVERLAY_ZOOM){showBanner('Tiefenmodell zu grob für Zoom '+state.zoom+'. Auf Zoom 13 oder kleiner wechseln; Tiefenprofile bleiben verfügbar.');return;}state.bathy=!state.bathy;$('bathy-btn').setAttribute('aria-pressed',String(state.bathy));$('bathy-attribution').hidden=!state.bathy;if(!state.bathy){bathy.hidden=true;bathy.removeAttribute('src');delete bathy.dataset.url;}else updateBathy();notify(state.bathy?'EMODnet-Modell: grobe Rasterdaten, keine Ufertiefen.':'Tiefenkarte ausgeblendet.');};
 let bannerTimer;function showBanner(t){$('map-banner').textContent=t;$('map-banner').hidden=false;clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>$('map-banner').hidden=true,4300);}
 let toastTimer;function notify(text){const t=$('toast');t.textContent=text;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3100);}
 function coordText(s){return `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`;}
