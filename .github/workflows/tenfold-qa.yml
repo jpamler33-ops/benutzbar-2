@@ -9,6 +9,7 @@ on:
       - 'scripts/**'
       - 'feed/**'
       - 'backend/**'
+      - '.github/workflows/quality-gate.yml'
       - '.github/workflows/tenfold-qa.yml'
   push:
     branches: [main]
@@ -20,6 +21,7 @@ on:
       - 'scripts/**'
       - 'feed/**'
       - 'backend/**'
+      - '.github/workflows/quality-gate.yml'
       - '.github/workflows/tenfold-qa.yml'
   workflow_dispatch:
 permissions:
