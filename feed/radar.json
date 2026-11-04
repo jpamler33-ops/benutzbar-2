@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-04T13:01:52.711471Z",
+  "updated_at": "2026-11-04T22:39:09.850346Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-04T13:01:47.024594Z",
+        "checked_at": "2026-11-04T22:39:02.018798Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-04T13:01:48.204211Z",
+        "checked_at": "2026-11-04T22:39:03.825091Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-04T13:01:49.235362Z",
+        "checked_at": "2026-11-04T22:39:05.239560Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,7 +64,7 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-04T13:01:50.433001Z",
+        "checked_at": "2026-11-04T22:39:06.924568Z",
         "status": "ok",
         "fetched": 10,
         "stored": 1,
@@ -80,8 +80,8 @@
       "title": "CAR NA NIZ OD PEDLJA",
       "excerpt": "Piše: Hrvoje KRNIĆ Evo ovako je to bilo toga dana gospodnjeg 14. listopada 2026. godine na Makarskoj rivijeri. Moj prijatelj Marko Bušić – Žuti zove me da odemo na prvi eging s obale. Dani uz obalu su još vrući, a more r",
       "published_at": "2026-11-01T04:00:34Z",
-      "first_seen": "2026-11-04T13:01:52.704490Z",
-      "last_seen": "2026-11-04T13:01:52.704490Z",
+      "first_seen": "2026-11-04T22:39:09.845153Z",
+      "last_seen": "2026-11-04T22:39:09.845153Z",
       "countries": [],
       "regions": [],
       "fish": [
