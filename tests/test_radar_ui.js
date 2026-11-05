@@ -3,7 +3,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const panel = {innerHTML:'', querySelector(sel){ return sel==='#radar-live'?radar:null; }};
-const radar = {innerHTML:'',isConnected:true,querySelector(){return null;}};
+let openMapClick=0, openMapHandler=null;
+const radar = {innerHTML:'',isConnected:true,querySelector(sel){
+  return sel==='.radar-open-map'?{addEventListener(_event,cb){openMapHandler=cb;}}:null;
+}};
 const mock = {
   articles:[
     {id:'a',source_id:'naudici_shore',url:'https://naudici.com/example/',
@@ -11,7 +14,11 @@ const mock = {
      fish:['Dentex'],themes:['Uferangeln'],relevance:0,published_at:'2026-11-02T10:00:00Z'},
     {id:'b',source_id:'anglerboard',url:'https://www.anglerboard.de/example/',
      title:'Rovinj brancin s obale',excerpt:'Uferbericht',regions:['istria'],countries:['HR'],
-     fish:['Wolfsbarsch'],themes:['Uferangeln'],relevance:78,published_at:'2026-11-02T11:00:00Z'}
+     fish:['Wolfsbarsch'],themes:['Uferangeln'],relevance:78,published_at:'2026-11-02T11:00:00Z'},
+    {id:'c',source_id:'naudici_shore',url:'https://naudici.com/car-na-niz-od-pedlja',
+     title:'CAR NA NIZ OD PEDLJA',excerpt:'Na Makarskoj rivijeri eging s obale',
+     regions:['split'],countries:['HR'],fish:['Dentex'],themes:['Uferangeln'],
+     relevance:77,published_at:'2026-11-01T04:00:34Z'}
   ],
   sources:[
     {id:'naudici_shore',name:'Na Udici',kind:'editorial',enabled:true,
@@ -23,7 +30,8 @@ const mock = {
   ]
 };
 const ctx = {
-  document: {getElementById(id){return id==='forum-panel'?panel:null;}},
+  document: {getElementById(id){return id==='forum-panel'?panel:null;},
+    querySelector(selector){return selector==='[data-tab="discover"]'?{click(){openMapClick++;}}:null;}},
   fetch: async()=>({ok:true,json:async()=>mock}),
   CoastIntel: {SOURCES:[],searchLinks:()=>[]},
   AbortController,Date,setTimeout,clearTimeout,console
@@ -42,8 +50,19 @@ async function flush(){await new Promise(resolve=>setTimeout(resolve,30));}
   assert.match(html,/Abruf OK \(10 Einträge\)/);
   assert.match(html,/&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html,/<script>alert/);
-  assert.match(html,/Regionale Treffer/);
-  // A Croatian editorial note must never appear on the French regional radar.
+  assert.match(html,/Regionale Quellenhinweise/);
+  assert.match(html,/Ortsbezug/);
+  ctx.CoastIntelUI.renderForum({id:'split',name:'Split / Dalmatien',country:'HR'});
+  await flush();
+  assert.match(radar.innerHTML,/CAR NA NIZ OD PEDLJA/);
+  assert.match(radar.innerHTML,/REGIONSBEZUG IM TEXT/);
+  assert.match(radar.innerHTML,/keine bestätigten Angelspots/);
+  assert.match(radar.innerHTML,/Wettermodelle gehören zur selbst gewählten Kartenposition/);
+  assert.match(radar.innerHTML,/Region auf Karte untersuchen/);
+  assert.equal(typeof openMapHandler,'function');
+  openMapHandler();
+  assert.equal(openMapClick,1);
+  // An unlocated report cannot turn into a French regional catch.
   ctx.CoastIntelUI.renderForum({id:'brittany',name:'Bretagne',country:'FR'});
   await flush();
   assert.doesNotMatch(radar.innerHTML,/Weitere Adria-Uferangel-Berichte/);
