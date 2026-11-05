@@ -164,6 +164,8 @@ function enableMapLayer(){
       disable();status.textContent='Ab Zoom 14 zu grob: Tiefenprofil am Spot verwenden.';
       return;
     }
+    // Hide a stale snapshot immediately if the zoom level changed.
+    follow();
     const bbox=api()?.visibleBBox?.();
     if(!bbox)return;
     let url;try{url=habitatUrl(bbox,map.clientWidth,map.clientHeight);}
