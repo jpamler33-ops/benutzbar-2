@@ -63,6 +63,13 @@ function render(region){
   const host=root.document?.getElementById('angeln-panel');
   if(!host)return;
   const country=plan.spot?.country||region?.country||'HR';
+  const legal=country==='HR'
+    ?{url:'https://www.gov.hr/en/marine-recreational-and-sport-fisheries/1542',
+      title:'Kroatien: staatliche Angel-Lizenzen und Meeresangelregeln',
+      note:'Beim Meeresangeln ist grundsätzlich auch vom Ufer eine Lizenz nötig. Schutzgebiete können zusätzliche Regeln haben.'}
+    :{url:'https://www.service-public.gouv.fr/particuliers/vosdroits/F2118',
+      title:'Frankreich: offizielle Meeresangel-Regeln',
+      note:'Registrierung, Artenschutz und Fangmeldung unterscheiden sich nach Küstenabschnitt und Fischart. Aktuelle örtliche Regeln prüfen.'};
   if(!plan.time)plan.time=localDatetime(country);
   const options=(values,chosen)=>values.map(x=>`<option value="${esc(x)}"${x===chosen?' selected':''}>${esc(x)}</option>`).join('');
   const checked=CHECKS.filter(([id])=>plan.checks[id]).length;
@@ -86,7 +93,9 @@ function render(region){
       <p>Beispielliste, keine verbindliche Materialempfehlung.</p></div>
     <div class="angler-section"><h3>Vor dem Angeln prüfen · ${checked}/4</h3>
       ${CHECKS.map(([id,text])=>`<label class="angler-check"><input type="checkbox" data-angler-check="${id}"${plan.checks[id]?' checked':''}> ${esc(text)}</label>`).join('')}
-      <p>Häkchen sind deine eigene Bestätigung. Die App prüft weder lokale Angelgenehmigungen noch die Sicherheit eines Zugangs.</p></div>
+      <p>Häkchen sind deine eigene Bestätigung. Die App prüft weder lokale Angelgenehmigungen noch die Sicherheit eines Zugangs.</p>
+      <div class="angler-legal"><strong>Amtliche Informationen · ${country}</strong>
+      <p>${esc(legal.note)}</p><a href="${legal.url}" target="_blank" rel="noopener noreferrer">${esc(legal.title)} ↗</a></div></div>
     <div class="angler-section"><h3>Wind, Wellen und Strömung</h3>
       <button id="angler-weather" type="button"${!spot?' disabled':''}>Prognose für diesen Plan prüfen</button>
       <div id="angler-weather-result" class="angler-weather-result" aria-live="polite">${spot?'Noch keine aktuellen Modelldaten geladen.':'Für die Wetterprüfung zuerst einen Kartenpunkt auswählen.'}</div>
