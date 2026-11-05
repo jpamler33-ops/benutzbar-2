@@ -132,7 +132,7 @@ function attachSpot(spot,region){
 function enableMapLayer(){
   const map=document.getElementById('map'),bathymetry=document.getElementById('bathy'),bathyBtn=document.getElementById('bathy-btn'),parent=document.querySelector('.map-layers');
   if(!map||!bathymetry||!bathyBtn||!parent)return;
-  const layer=document.createElement('img');layer.className='habitat-wms';layer.alt='';layer.draggable=false;layer.hidden=true;map.insertBefore(layer,document.getElementById('markers'));
+  let layer=document.createElement('img');layer.className='habitat-wms';layer.alt='';layer.draggable=false;layer.hidden=true;map.insertBefore(layer,document.getElementById('markers'));
   const btn=document.createElement('button');btn.type='button';btn.id='habitat-btn';btn.className='layer-btn';btn.setAttribute('aria-pressed','false');btn.innerHTML='<span class="layer-icon">≋</span> Lebensräume <span class="switch"></span>';
   const status=document.createElement('span');status.className='geo-layer-status';status.setAttribute('aria-live','polite');
   parent.append(btn,status);
@@ -175,7 +175,8 @@ function enableMapLayer(){
     const preload=new Image();
     preload.onload=()=>{
       if(!enabled||version!==requestId)return;
-      layer.src=url;loadedFrame=frame;follow();
+      preload.className='habitat-wms';preload.alt='';preload.draggable=false;preload.hidden=true;
+      layer.replaceWith(preload);layer=preload;loadedFrame=frame;follow();
       status.textContent='EUSeaMap 2025 · grobes Lebensraum-Modell, keine Spotmessung';
     };
     preload.onerror=()=>{
