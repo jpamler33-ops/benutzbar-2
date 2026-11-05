@@ -27,7 +27,7 @@ function unproject(x,y,z){const scale=TILE*2**z;return {lat:Math.atan(Math.sinh(
 function coordForPixel(x,y){const c=project(state.lat,state.lon,state.zoom),w=map.clientWidth,h=map.clientHeight;return unproject(c.x+x-w/2,c.y+y-h/2,state.zoom);}
 function visibleBBox(){const a=coordForPixel(0,map.clientHeight),b=coordForPixel(map.clientWidth,0);return {s:Math.min(a.lat,b.lat),w:a.lon,n:Math.max(a.lat,b.lat),e:b.lon};}
 function normalizedLon(lon){return mod(lon+180,360)-180;}
-function setCenter(lat,lon){state.lat=clamp(lat,-85.04,85.04);state.lon=normalizedLon(lon);renderMap();}
+function setCenter(lat,lon){state.lat=clamp(lat,-85.04,85.04);state.lon=normalizedLon(lon);renderMap();mapMotion();updateBathy();}
 function zoomTo(z,position){const next=clamp(Math.round(z),MIN_ZOOM,MAX_ZOOM);if(next===state.zoom)return;let pivot=null;if(position){pivot=coordForPixel(position.x,position.y);}state.zoom=next;if(pivot){const p=project(pivot.lat,pivot.lon,next),w=map.clientWidth,h=map.clientHeight;const centerX=p.x-(position.x-w/2),centerY=p.y-(position.y-h/2),c=unproject(centerX,centerY,next);state.lat=clamp(c.lat,-85.04,85.04);state.lon=normalizedLon(c.lon);}renderMap();updateBathy();window.dispatchEvent(new Event('coastfinder:mapchange'));}
 function pan(dx,dy){const p=project(state.lat,state.lon,state.zoom);const c=unproject(p.x-dx,p.y-dy,state.zoom);state.lat=clamp(c.lat,-85.04,85.04);state.lon=c.lon;renderMap();}
 const tileCache=new Map(), failedTiles=new Set(); let renderPending=false,tileErrorShown=false;
@@ -41,14 +41,28 @@ for(let ix=firstX;ix<=lastX;ix++)for(let iy=firstY;iy<=lastY;iy++){
  markers.replaceChildren();const visible=[...state.results,...state.pins];for(const s of visible){const p=project(s.lat,s.lon,z);let x=p.x-c.x;if(x>n*TILE/2)x-=n*TILE;if(x<-n*TILE/2)x+=n*TILE;x+=width/2;const y=p.y-c.y+height/2;if(x < -28||x>width+28||y < -28||y>height+28)continue;
  const b=document.createElement('button');b.className=`marker ${s.category}${state.selected?.id===s.id?' active':''}`;b.style.left=x+'px';b.style.top=y+'px';b.textContent=META[s.category]?.icon||'●';b.title=`${s.name} – ${s.typeLabel}`;b.setAttribute('aria-label',b.title);b.addEventListener('click',e=>{e.stopPropagation();selectSpot(s);});markers.appendChild(b);}
  $('zoom-info').textContent=`ZOOM ${z} · OPENSTREETMAP`;}
+// WMS snapshots follow the projected map position while the user pans.
+// The old image stays georeferenced until the next viewport image loads.
+let bathyFrame=null,bathyRequest=0,bathyLastUrl='';
+function positionBathy(){
+  if(!state.bathy||!bathyFrame||bathyFrame.zoom!==state.zoom||
+     bathyFrame.width!==map.clientWidth||bathyFrame.height!==map.clientHeight){bathy.hidden=true;return;}
+  const origin=project(bathyFrame.lat,bathyFrame.lon,state.zoom),current=project(state.lat,state.lon,state.zoom);
+  const world=TILE*2**state.zoom;
+  let dx=origin.x-current.x;
+  if(dx>world/2)dx-=world;
+  if(dx< -world/2)dx+=world;
+  const dy=origin.y-current.y;
+  bathy.style.transform=`translate3d(${Math.round(dx)}px,${Math.round(dy)}px,0)`;
+  bathy.hidden=Math.abs(dx)>map.clientWidth||Math.abs(dy)>map.clientHeight;
+}
 function updateBathy(){
   if(!state.bathy)return;
-  // EMODnet's regular grid is ~115 m. At detailed spot zooms the large
-  // raster pixels can obscure land/coast, creating false visual precision.
   if(state.zoom>MAX_MODEL_OVERLAY_ZOOM){
-    state.bathy=false;bathy.hidden=true;bathy.removeAttribute('src');delete bathy.dataset.url;
+    state.bathy=false;bathyRequest++;bathyFrame=null;bathyLastUrl='';
+    bathy.hidden=true;bathy.removeAttribute('src');bathy.style.transform='';
     $('bathy-btn').setAttribute('aria-pressed','false');$('bathy-attribution').hidden=true;
-    showBanner('Grobe Tiefenkarte ab Zoom 14 ausgeblendet. Zoome heraus oder nutze das Tiefenprofil am Spot.');
+    showBanner('Grobe Tiefenkarte ab Zoom 14 ausgeblendet. Tiefenprofil am Spot bleibt verfügbar.');
     return;
   }
   const width=Math.round(map.clientWidth),height=Math.round(map.clientHeight);
@@ -58,28 +72,37 @@ function updateBathy(){
   const sw=merc(b.s,b.w),ne=merc(b.n,b.e);
   const params=new URLSearchParams({service:'WMS',version:'1.1.1',request:'GetMap',layers:'emodnet:mean_multicolour',styles:'',format:'image/png',transparent:'true',srs:'EPSG:3857',bbox:[sw.x,sw.y,ne.x,ne.y].join(','),width:String(Math.min(width,1800)),height:String(Math.min(height,1400))});
   const url='https://ows.emodnet-bathymetry.eu/wms?'+params;
-  if(bathy.dataset.url===url)return;
-  // Never show an old viewport overlay under newly moved base-map tiles.
-  bathy.hidden=true;bathy.dataset.url=url;
-  bathy.onload=()=>{if(state.bathy&&bathy.dataset.url===url)bathy.hidden=false;};
-  bathy.onerror=()=>{if(bathy.dataset.url!==url)return;bathy.hidden=true;delete bathy.dataset.url;notify('EMODnet-Tiefenlayer derzeit nicht erreichbar.');};
-  bathy.src=url;
+  if(url===bathyLastUrl){positionBathy();return;}
+  const version=++bathyRequest;
+  bathyLastUrl=url;
+  const frame={lat:state.lat,lon:state.lon,zoom:state.zoom,width:map.clientWidth,height:map.clientHeight};
+  const next=new Image();
+  next.onload=()=>{
+    if(version!==bathyRequest||!state.bathy)return;
+    bathy.src=url;bathyFrame=frame;positionBathy();
+  };
+  next.onerror=()=>{
+    if(version!==bathyRequest||!state.bathy)return;
+    bathyLastUrl='';positionBathy();
+    notify('EMODnet-Tiefenkarte nicht erreichbar. Der vorherige Ausschnitt bleibt sichtbar.');
+  };
+  next.src=url;
 }
 function moveEnd(){updateBathy();state.viewMoved=true;window.dispatchEvent(new Event('coastfinder:mapchange'));}
-function mapMotion(){if(state.bathy)bathy.hidden=true;window.dispatchEvent(new Event('coastfinder:mapmotion'));}
+function mapMotion(){positionBathy();window.dispatchEvent(new Event('coastfinder:mapmotion'));}
 let pointers=new Map(),drag=null,longPress=null,wasLongPress=false,pinchDistance=0;
 map.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;map.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){drag={x:e.clientX,y:e.clientY,moved:false};wasLongPress=false;map.classList.add('dragging');longPress=setTimeout(()=>{if(drag&&!drag.moved){const r=map.getBoundingClientRect(),coord=coordForPixel(e.clientX-r.left,e.clientY-r.top);createPin(coord.lat,coord.lon);wasLongPress=true;}},700);}else{clearTimeout(longPress);drag=null;const a=[...pointers.values()];pinchDistance=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}});
-map.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){const dx=e.clientX-old.x,dy=e.clientY-old.y;if(drag&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8){drag.moved=true;clearTimeout(longPress);}if(dx||dy){mapMotion();pan(dx,dy);}}else if(pointers.size===2){const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(Math.abs(d-pinchDistance)>45){const r=map.getBoundingClientRect();zoomTo(state.zoom+(d>pinchDistance?1:-1),{x:(a[0].x+a[1].x)/2-r.left,y:(a[0].y+a[1].y)/2-r.top});pinchDistance=d;}}});
+map.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){const dx=e.clientX-old.x,dy=e.clientY-old.y;if(drag&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8){drag.moved=true;clearTimeout(longPress);}if(dx||dy){pan(dx,dy);mapMotion();}}else if(pointers.size===2){const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(Math.abs(d-pinchDistance)>45){const r=map.getBoundingClientRect();zoomTo(state.zoom+(d>pinchDistance?1:-1),{x:(a[0].x+a[1].x)/2-r.left,y:(a[0].y+a[1].y)/2-r.top});pinchDistance=d;}}});
 function releasePointer(e){if(!pointers.has(e.pointerId))return;const moved=drag?.moved;clearTimeout(longPress);pointers.delete(e.pointerId);map.classList.remove('dragging');if(!moved&&!wasLongPress&&state.pinMode&&pointers.size===0){const r=map.getBoundingClientRect(),p=coordForPixel(e.clientX-r.left,e.clientY-r.top);createPin(p.lat,p.lon);state.pinMode=false;$('pin-btn').classList.remove('active');showBanner('Eigener Pin gespeichert.');}drag=null;moveEnd();}
 map.addEventListener('pointerup',releasePointer);map.addEventListener('pointercancel',releasePointer);
 map.addEventListener('contextmenu',e=>{e.preventDefault();const r=map.getBoundingClientRect(),p=coordForPixel(e.clientX-r.left,e.clientY-r.top);createPin(p.lat,p.lon);});
 map.addEventListener('wheel',e=>{e.preventDefault();const r=map.getBoundingClientRect();zoomTo(state.zoom+(e.deltaY<0?1:-1),{x:e.clientX-r.left,y:e.clientY-r.top});},{passive:false});
 map.addEventListener('dblclick',e=>{e.preventDefault();const r=map.getBoundingClientRect();zoomTo(state.zoom+1,{x:e.clientX-r.left,y:e.clientY-r.top});});
-map.addEventListener('keydown',e=>{if(['+','='].includes(e.key)){zoomTo(state.zoom+1);e.preventDefault();}if(e.key==='-'){zoomTo(state.zoom-1);e.preventDefault();}const steps={ArrowLeft:[75,0],ArrowRight:[-75,0],ArrowUp:[0,75],ArrowDown:[0,-75]};if(steps[e.key]){pan(...steps[e.key]);moveEnd();e.preventDefault();}});
+map.addEventListener('keydown',e=>{if(['+','='].includes(e.key)){zoomTo(state.zoom+1);e.preventDefault();}if(e.key==='-'){zoomTo(state.zoom-1);e.preventDefault();}const steps={ArrowLeft:[75,0],ArrowRight:[-75,0],ArrowUp:[0,75],ArrowDown:[0,-75]};if(steps[e.key]){pan(...steps[e.key]);mapMotion();moveEnd();e.preventDefault();}});
 $('zoom-plus').onclick=()=>zoomTo(state.zoom+1);$('zoom-minus').onclick=()=>zoomTo(state.zoom-1);
 $('locate').onclick=()=>{if(!navigator.geolocation){notify('Standortbestimmung nicht unterstützt.');return;}navigator.geolocation.getCurrentPosition(pos=>{setCenter(pos.coords.latitude,pos.coords.longitude);zoomTo(13);moveEnd();notify('Standort auf Karte gesetzt.');},()=>notify('Standort nicht verfügbar oder Berechtigung fehlt.'),{enableHighAccuracy:false,timeout:9000});};
 $('pin-btn').onclick=()=>{state.pinMode=!state.pinMode;$('pin-btn').classList.toggle('active',state.pinMode);showBanner(state.pinMode?'Tippe auf die Karte, um deinen privaten Pin zu setzen.':'Pin-Modus beendet.');};
-$('bathy-btn').onclick=()=>{if(!state.bathy&&state.zoom>MAX_MODEL_OVERLAY_ZOOM){showBanner('Tiefenmodell zu grob für Zoom '+state.zoom+'. Auf Zoom 13 oder kleiner wechseln; Tiefenprofile bleiben verfügbar.');return;}state.bathy=!state.bathy;$('bathy-btn').setAttribute('aria-pressed',String(state.bathy));$('bathy-attribution').hidden=!state.bathy;if(!state.bathy){bathy.hidden=true;bathy.removeAttribute('src');delete bathy.dataset.url;}else updateBathy();notify(state.bathy?'EMODnet-Modell: grobe Rasterdaten, keine Ufertiefen.':'Tiefenkarte ausgeblendet.');};
+$('bathy-btn').onclick=()=>{if(!state.bathy&&state.zoom>MAX_MODEL_OVERLAY_ZOOM){showBanner('Tiefenmodell zu grob für Zoom '+state.zoom+'. Auf Zoom 13 oder kleiner wechseln; Tiefenprofile bleiben verfügbar.');return;}state.bathy=!state.bathy;$('bathy-btn').setAttribute('aria-pressed',String(state.bathy));$('bathy-attribution').hidden=!state.bathy;if(!state.bathy){bathyRequest++;bathyFrame=null;bathyLastUrl='';bathy.hidden=true;bathy.style.transform='';bathy.removeAttribute('src');}else updateBathy();notify(state.bathy?'EMODnet-Modell: grobe Rasterdaten, keine Ufertiefen.':'Tiefenkarte ausgeblendet.');};
 let bannerTimer;function showBanner(t){$('map-banner').textContent=t;$('map-banner').hidden=false;clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>$('map-banner').hidden=true,4300);}
 let toastTimer;function notify(text){const t=$('toast');t.textContent=text;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3100);}
 function coordText(s){return `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`;}
