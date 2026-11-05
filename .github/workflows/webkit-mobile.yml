@@ -19,11 +19,16 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: coastfinder-webkit-${{ github.ref }}
+  # Container-based runs must not queue behind legacy apt jobs stalled during migration.
+  group: coastfinder-webkit-container-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   mobile-webkit:
     runs-on: ubuntu-24.04
+    # Official pinned Playwright image contains matching browser + OS dependencies.
+    # Avoid unreliable apt downloads on every PR.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
     timeout-minutes: 25
     steps:
       - name: Checkout existing COASTFINDER
@@ -32,9 +37,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned free Playwright and WebKit browser dependencies
-        run: |
-          npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
-          npx playwright install --with-deps webkit
+      - name: Install matching Playwright JS package (browsers provided by container)
+        run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
       - name: Ten real WebKit engine iPhone-sized mobile browser cycles
         run: node tests/webkit_mobile_10x.js

@@ -150,5 +150,67 @@ class RadarQuality(unittest.TestCase):
         self.assertGreater(rows[0]['relevance'],0)
 
 
+    def test_makarska_riviera_inflection_in_real_source_excerpt(self):
+        # The published article refers to the Makarska Riviera, not a precise spot.
+        excerpt=('Evo ovako je to bilo toga dana gospodnjeg 14. listopada '
+                 '2026. godine na Makarskoj rivijeri. Moj prijatelj zove me '
+                 'da odemo na prvi eging s obale. Dani uz obalu su jos vruci.')
+        tags = self.classify('CAR NA NIZ OD PEDLJA', excerpt, '2026-11-01T04:00:34Z')
+        self.assertTrue(tags['relevant'])
+        self.assertEqual(['split'], tags['regions'])
+        self.assertEqual(['HR'], tags['countries'])
+        self.assertIn('Uferangeln', tags['themes'])
+        self.assertEqual([], tags['fish'])  # No fish asserted from that excerpt alone.
+
+    def test_makarska_riviera_negative_lookalikes(self):
+        for title, description in [
+            ('Unterkunft an der Makarskoj rivijeri', 'Hotel und Pool am Meer'),
+            ('Neue Ruten auf der Makarskoj rivijeri zu verkaufen', 'Eging s obale'),
+            ('Eging s obale an der französischen Riviera', 'im Meer bei Nice, keine Makarska'),
+            ('Makarskoj: der Familienname', 'Spinning am See, keine Küste'),
+        ]:
+            with self.subTest(title=title):
+                result=self.classify(title, description)
+                self.assertFalse(result['relevant'] and 'split' in result['regions'])
+
+    def test_feed_category_cannot_create_geographic_evidence(self):
+        source=next(s for s in radar.load_sources(ROOT/'scripts'/'sources.json')
+                    if s['id']=='naudici_shore')
+        xml='''<rss><channel><item>
+            <title>Eging s obale</title>
+            <link>https://naudici.com/no-geography/</link>
+            <description>Ribolov u moru</description>
+            <category>Ribolov s obale</category>
+            <category>Makarskoj rivijeri</category>
+            </item></channel></rss>'''.encode('utf-8')
+        rows=radar.parse_feed(xml,source)
+        self.assertEqual(1,len(rows))
+        self.assertEqual([],rows[0]['regions'])
+        self.assertEqual([],rows[0]['countries'])
+        self.assertEqual(0,rows[0]['relevance'])
+
+    def test_feed_recovers_only_region_from_bent_croatian_place(self):
+        source=next(s for s in radar.load_sources(ROOT/'scripts'/'sources.json')
+                    if s['id']=='naudici_shore')
+        excerpt=('Evo tako dana na Makarskoj rivijeri. '
+                 'Odlazimo na prvi eging s obale.')
+        xml=f'''<rss><channel><item>
+            <title>CAR NA NIZ OD PEDLJA</title>
+            <link>https://naudici.com/car-na-niz-od-pedlja/</link>
+            <description>{excerpt}</description>
+            <category>Ribolov s obale</category><category>zubatac</category>
+            </item></channel></rss>'''.encode('utf-8')
+        rows=radar.parse_feed(xml,source)
+        self.assertEqual(1,len(rows))
+        self.assertEqual(['split'],rows[0]['regions'])
+        self.assertEqual(['HR'],rows[0]['countries'])
+        self.assertGreater(rows[0]['relevance'],0)
+        self.assertIn('Dentex',rows[0]['fish'])  # Publisher category, not verified catch.
+        previous={**rows[0], 'regions':[], 'countries':[], 'relevance':0}
+        refreshed=update_free_feed.revalidate_previous([previous],[source])
+        self.assertEqual(['split'],refreshed[0]['regions'])
+        self.assertEqual(['HR'],refreshed[0]['countries'])
+
+
 if __name__ == '__main__':
     unittest.main()
