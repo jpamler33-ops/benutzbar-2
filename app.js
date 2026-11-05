@@ -17,7 +17,7 @@ const STORAGE={favs:'coastfinder:favs:v1',pins:'coastfinder:pins:v1',notes:'coas
 function readStore(key,fallback){try {return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
 function saveStore(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{notify('Speicher voll oder blockiert.');}}
 const state={region:REGIONS[0],lat:REGIONS[0].lat,lon:REGIONS[0].lon,zoom:12,selected:null,results:[],analyzed:false,loading:false,filter:'all',explorer:false,tab:'discover',bathy:false,pinMode:false,viewMoved:false,favs:readStore(STORAGE.favs,{}),pins:readStore(STORAGE.pins,[]),notes:readStore(STORAGE.notes,{})};
-const map=$('map'), tiles=$('tiles'), markers=$('markers'), bathy=$('bathy'), drawer=$('drawer');
+const map=$('map'), tiles=$('tiles'), markers=$('markers'), drawer=$('drawer'); let bathy=$('bathy');
 const TILE=256, MAX_ZOOM=18, MIN_ZOOM=3, MAX_MODEL_OVERLAY_ZOOM=13;
 const toRad=x=>x*Math.PI/180;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -79,7 +79,8 @@ function updateBathy(){
   const next=new Image();
   next.onload=()=>{
     if(version!==bathyRequest||!state.bathy)return;
-    bathy.src=url;bathyFrame=frame;positionBathy();
+    next.id='bathy';next.className='bathy';next.alt='';next.draggable=false;next.hidden=true;
+    bathy.replaceWith(next);bathy=next;bathyFrame=frame;positionBathy();
   };
   next.onerror=()=>{
     if(version!==bathyRequest||!state.bathy)return;
