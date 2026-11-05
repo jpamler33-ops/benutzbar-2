@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parent.parent
-REQUIRED = ('index.html', 'app.js', 'intel-engine.js', 'intel-ui.js', 'catch-ui.js', 'free-store.js', 'styles.css', 'manifest.webmanifest', 'feed/radar.json')
+REQUIRED = ('index.html', 'app.js', 'angler-hub.js', 'intel-engine.js', 'intel-ui.js', 'catch-ui.js', 'free-store.js', 'styles.css', 'manifest.webmanifest', 'feed/radar.json')
 PERSONAL_FIELDS = frozenset({'lat','lon','latitude','longitude','user_id','email','password','access_token','refresh_token','session_id','private_notes','private_catches','user_location'})
 
 class LocalAssets(html.parser.HTMLParser):
