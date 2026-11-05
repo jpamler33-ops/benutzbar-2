@@ -89,3 +89,27 @@
 .geo-warning a{color:#b0eaff}
 .geo-show-layer{width:100%;margin:8px 0 0;background:#1d4b53;border:1px solid #42787a;color:#b8fff2;border-radius:8px;padding:10px;font-size:11px;font-weight:700}
 @media(max-width:900px){.map-layers{left:12px;bottom:calc(310px + env(safe-area-inset-bottom,0px))}.map-layers .layer-btn{font-size:10px;padding:7px 8px}.geo-intel{padding:12px}.geo-metrics b{font-size:12px}}
+
+
+/* Fishing-first workflow: locally stored trip plan, compact on small iPhones. */
+.angler-hub{padding:14px 16px 28px;display:flex;flex-direction:column;gap:12px}
+.angler-intro,.angler-spot,.angler-section{background:#0c2837;border:1px solid #315766;border-radius:12px;padding:13px}
+.angler-intro>b{font-size:10px;color:#71dccd;letter-spacing:.12em}
+.angler-intro h2{font-size:17px;line-height:1.3;margin:8px 0}
+.angler-intro p,.angler-spot p,.angler-section p{font-size:11px;line-height:1.55;color:#b2ced8;margin-top:7px}
+.angler-spot strong,.angler-section h3{display:block;font-size:13px;color:#e0f9f3}
+.angler-form{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.angler-form label{color:#a8d8d7;font-size:10px;display:flex;flex-direction:column;gap:5px}
+.angler-form label:last-child{grid-column:1/-1}
+.angler-form select,.angler-form input{min-width:0;width:100%;border:1px solid #45737f;background:#0c2a3a;border-radius:9px;color:#ecfbfa;padding:11px;font-size:14px}
+.angler-spot button,.angler-section button{background:#1d5960;color:#e1fff7;border:1px solid #4e9592;border-radius:9px;padding:10px;font-size:12px;margin-top:10px;font-weight:700}
+.angler-spot a{display:inline-block;padding:10px 2px;font-size:11px;margin-left:8px}
+.angler-section ul{padding-left:19px;margin:10px 0 0;line-height:1.65;color:#c9e8e2;font-size:12px}
+.angler-check{display:flex;align-items:flex-start;gap:9px;color:#d3e9e7;margin:10px 0;font-size:12px;line-height:1.4}
+.angler-check input{width:18px;height:18px;accent-color:#64dfc7;flex:none}
+.angler-weather-result{border-left:3px solid #65cab6;background:#0b202f;border-radius:6px;margin-top:11px;padding:10px;font-size:12px;color:#c6dedc;line-height:1.5}
+.angler-weather-result b{font-size:12px;color:#b5f2e5}
+.angler-weather-result p{margin-top:8px}
+.angler-legal{margin-top:12px;padding:10px;border:1px solid #456c7b;border-radius:9px;background:#0a1c2c}.angler-legal strong{font-size:11px;color:#a9efe0}.angler-legal a{display:block;font-size:11px;margin-top:8px;color:#8ae4db;overflow-wrap:anywhere}
+.angler-save-status{color:#a1c6c2;font-size:10px;text-align:center;padding:10px}
+@media(max-width:440px){.angler-hub{padding:12px 12px 25px;gap:10px}.angler-form{grid-template-columns:1fr}.angler-form label:last-child{grid-column:auto}.bottom-nav .nav-tab{font-size:8px;min-width:0;padding-left:1px;padding-right:1px}}

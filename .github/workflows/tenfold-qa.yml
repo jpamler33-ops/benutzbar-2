@@ -55,6 +55,7 @@ jobs:
             node tests/test_geo.js
             node tests/test_geo_quality.js
             node tests/test_map.js
+            node tests/test_angler_hub.js
             node tests/test_radar_ui.js
             node tests/test_private_backup.js
             python -m unittest discover -s tests -q

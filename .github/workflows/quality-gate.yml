@@ -54,7 +54,9 @@ jobs:
           node tests/test_geo.js
           node tests/test_geo_quality.js
       - name: Map tiles and gesture smoke test
-        run: node tests/test_map.js
+        run: |
+          node tests/test_map.js
+          node tests/test_angler_hub.js
       - name: Radar UI regression (no paid browser service)
         run: node tests/test_radar_ui.js
       - name: Private catches export/import regression

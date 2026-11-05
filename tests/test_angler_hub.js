@@ -1,0 +1,34 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../angler-hub.js'),'utf8');
+for(let round=1;round<=10;round++){
+ const storage=new Map(),location={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
+ const sandbox={localStorage:location,Intl,Date,console};
+ sandbox.globalThis=sandbox;
+ vm.runInNewContext(source,sandbox,{filename:'angler-hub.js'});
+ const api=sandbox.CoastAngling;
+ assert(api);
+ assert.equal(api.useSpot({name:'X',lat:99,lon:13},{country:'HR'}),false);
+ assert.equal(api.useSpot({name:'TEST',lat:44.87,lon:13.85,category:'rock'},{country:'HR',id:'istria'}),true);
+ assert.equal(api.readPlan().spot.name,'TEST');
+ assert.equal(api.readPlan().spot.country,'HR');
+ assert.equal(api.readPlan().spot.region,'istria');
+ assert.equal(api.readPlan().fish,'Wolfsbarsch');
+ assert.equal(api.modelForPlan([{time:'2026-11-05T12:00',wind:10}], '2026-11-05T11:30').wind,10);
+ assert.equal(api.modelForPlan([{time:'2026-11-05T16:00'}], '2026-11-05T11:30'),null);
+ assert.equal(api.modelForPlan(null, '2026-11-05T11:30'),null);
+ assert(storage.get('coastfinder:angler-plan:v1').includes('44.87'));
+ const next={localStorage:location,Intl,Date,console};next.globalThis=next;
+ vm.runInNewContext(source,next,{filename:'angler-hub.js'});
+ assert.equal(next.CoastAngling.readPlan().spot.name,'TEST');
+ storage.set('coastfinder:angler-plan:v1', '{invalid');
+ const corrupt={localStorage:location,Intl,Date,console};corrupt.globalThis=corrupt;
+ vm.runInNewContext(source,corrupt,{filename:'angler-hub.js'});
+ assert.equal(corrupt.CoastAngling.readPlan().spot,null);
+ assert.equal(corrupt.CoastAngling.validateSpot({name:'bad',lat:NaN,lon:1}),false);
+ console.log('ANGLER_PLAN_ROUND '+round+'/10 PASS');
+}
+console.log('ANGLER_PLAN_ALL_PASS 10');

@@ -132,32 +132,70 @@ function attachSpot(spot,region){
 function enableMapLayer(){
   const map=document.getElementById('map'),bathymetry=document.getElementById('bathy'),bathyBtn=document.getElementById('bathy-btn'),parent=document.querySelector('.map-layers');
   if(!map||!bathymetry||!bathyBtn||!parent)return;
-  const layer=document.createElement('img');layer.className='habitat-wms';layer.alt='';layer.draggable=false;layer.hidden=true;map.insertBefore(layer,document.getElementById('markers'));
+  let layer=document.createElement('img');layer.className='habitat-wms';layer.alt='';layer.draggable=false;layer.hidden=true;map.insertBefore(layer,document.getElementById('markers'));
   const btn=document.createElement('button');btn.type='button';btn.id='habitat-btn';btn.className='layer-btn';btn.setAttribute('aria-pressed','false');btn.innerHTML='<span class="layer-icon">≋</span> Lebensräume <span class="switch"></span>';
   const status=document.createElement('span');status.className='geo-layer-status';status.setAttribute('aria-live','polite');
   parent.append(btn,status);
-  let enabled=false,lastUrl='';
-  const disable=()=>{enabled=false;layer.hidden=true;layer.removeAttribute('src');lastUrl='';status.textContent='';btn.setAttribute('aria-pressed','false');};
+  let enabled=false,lastUrl='',loadedFrame=null,requestId=0;
+  const api=()=>root.__COASTFINDER_TEST__;
+  const disable=()=>{
+    enabled=false;requestId++;loadedFrame=null;lastUrl='';
+    layer.hidden=true;layer.removeAttribute('src');layer.style.transform='';
+    status.textContent='';btn.setAttribute('aria-pressed','false');
+  };
+  function follow(){
+    const a=api(),st=a?.getState?.(),p=a?.project;
+    if(!enabled||!loadedFrame||!st||typeof p!=='function'||
+       loadedFrame.zoom!==st.zoom||loadedFrame.width!==map.clientWidth||
+       loadedFrame.height!==map.clientHeight){layer.hidden=true;return;}
+    const old=p(loadedFrame.lat,loadedFrame.lon,st.zoom),now=p(st.lat,st.lon,st.zoom);
+    const world=256*2**st.zoom;
+    let dx=old.x-now.x;
+    if(dx>world/2)dx-=world;
+    if(dx< -world/2)dx+=world;
+    const dy=old.y-now.y;
+    layer.style.transform=`translate3d(${Math.round(dx)}px,${Math.round(dy)}px,0)`;
+    layer.hidden=Math.abs(dx)>map.clientWidth||Math.abs(dy)>map.clientHeight;
+  }
   function sync(){
     if(!enabled)return;
-    const zoom=root.__COASTFINDER_TEST__?.getState?.().zoom;
-    // EUSeaMap is a broad-scale model, not a coast-by-coast survey.
-    if(typeof zoom==='number'&&zoom>13){
+    const st=api()?.getState?.();
+    if(typeof st?.zoom==='number'&&st.zoom>13){
       disable();status.textContent='Ab Zoom 14 zu grob: Tiefenprofil am Spot verwenden.';
       return;
     }
-    const bbox=(typeof root.__COASTFINDER_TEST__?.visibleBBox==='function')?root.__COASTFINDER_TEST__.visibleBBox():null;
+    // Hide a stale snapshot immediately if the zoom level changed.
+    follow();
+    const bbox=api()?.visibleBBox?.();
     if(!bbox)return;
-    let url;try{url=habitatUrl(bbox,map.clientWidth,map.clientHeight);}catch{layer.hidden=true;status.textContent='Kartenbereich ungültig';return;}
-    if(url===lastUrl)return;
-    lastUrl=url;layer.hidden=true;status.textContent='EUSeaMap-Modell wird geladen …';
-    layer.onload=()=>{if(enabled&&url===lastUrl){layer.hidden=false;status.textContent='EUSeaMap 2025 · grobe Modellhabitate, keine Spotmessung';}};
-    layer.onerror=()=>{if(!enabled||url!==lastUrl)return;layer.hidden=true;lastUrl='';status.textContent='Lebensraumkarte nicht verfügbar';};
-    layer.src=url;
+    let url;try{url=habitatUrl(bbox,map.clientWidth,map.clientHeight);}
+    catch{layer.hidden=true;status.textContent='Kartenbereich ungültig';return;}
+    if(url===lastUrl){follow();return;}
+    lastUrl=url;const version=++requestId;
+    const frame={lat:st.lat,lon:st.lon,zoom:st.zoom,width:map.clientWidth,height:map.clientHeight};
+    status.textContent='EUSeaMap-Modell wird geladen …';
+    const preload=new Image();
+    preload.onload=()=>{
+      if(!enabled||version!==requestId)return;
+      preload.className='habitat-wms';preload.alt='';preload.draggable=false;preload.hidden=true;
+      layer.replaceWith(preload);layer=preload;loadedFrame=frame;follow();
+      status.textContent='EUSeaMap 2025 · grobes Lebensraum-Modell, keine Spotmessung';
+    };
+    preload.onerror=()=>{
+      if(!enabled||version!==requestId)return;
+      lastUrl='';follow();status.textContent='Lebensraumkarte nicht verfügbar';
+    };
+    preload.src=url;
   }
-  btn.onclick=()=>{if(enabled){disable();return;}if(bathyBtn.getAttribute('aria-pressed')==='true')bathyBtn.click();enabled=true;btn.setAttribute('aria-pressed','true');sync();};
-  bathyBtn.addEventListener('click',()=>{if(bathyBtn.getAttribute('aria-pressed')==='true'&&enabled)disable();});
-  root.addEventListener('coastfinder:mapmotion',()=>{if(enabled)layer.hidden=true;});
+  btn.onclick=()=>{
+    if(enabled){disable();return;}
+    if(bathyBtn.getAttribute('aria-pressed')==='true')bathyBtn.click();
+    enabled=true;btn.setAttribute('aria-pressed','true');sync();
+  };
+  bathyBtn.addEventListener('click',()=>{
+    if(bathyBtn.getAttribute('aria-pressed')==='true'&&enabled)disable();
+  });
+  root.addEventListener('coastfinder:mapmotion',follow);
   root.addEventListener('coastfinder:mapchange',sync);
 }
 if(typeof document!=='undefined'){
