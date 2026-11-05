@@ -19,7 +19,8 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: coastfinder-webkit-${{ github.ref }}
+  # Container-based runs must not queue behind legacy apt jobs stalled during migration.
+  group: coastfinder-webkit-container-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   mobile-webkit:
