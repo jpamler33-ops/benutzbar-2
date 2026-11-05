@@ -117,7 +117,10 @@ async function one(browser,url,round){
   await page.locator('#zoom-minus').tap();
   check('Map still navigable after raster limit',await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom)===12);
 
-  // End-to-end angling flow: candidate -> plan -> conditions -> persistent private settings.
+  // End-to-end angling flow: after using map layers, return to the spot list
+  // through the actual navigation (the bottom sheet may have collapsed).
+  await page.locator('.nav-tab[data-tab="discover"]').tap();
+  check('Spot list accessible after layer controls',await page.locator('#spot-list .spot-card').first().isVisible());
   await page.locator('#spot-list .spot-card').first().tap();
   await page.locator('#spot-plan').tap();
   check('Plan opens from selected spot',await page.locator('#angeln-panel').isVisible());
