@@ -125,6 +125,7 @@ async function one(browser,url,round){
   await page.locator('#spot-plan').tap();
   check('Plan opens from selected spot',await page.locator('#angeln-panel').isVisible());
   check('Planned spot coordinates retained',await page.locator('.angler-spot').innerText().then(x=>x.includes('44.8690')));
+  check('Official Croatian fishing rules reachable from trip plan',await page.locator('.angler-legal a').getAttribute('href')==='https://www.gov.hr/en/marine-recreational-and-sport-fisheries/1542');
   await page.locator('#angler-fish').selectOption('Dorade');
   await page.locator('#angler-method').selectOption('Grundangeln');
   await page.locator('[data-angler-check="license"]').check();
