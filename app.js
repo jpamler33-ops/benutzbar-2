@@ -65,6 +65,8 @@ function updateBathy(){
     showBanner('Grobe Tiefenkarte ab Zoom 14 ausgeblendet. Tiefenprofil am Spot bleibt verfügbar.');
     return;
   }
+  // A viewport snapshot must never survive a zoom at the wrong map scale.
+  positionBathy();
   const width=Math.round(map.clientWidth),height=Math.round(map.clientHeight);
   if(width<1||height<1)return;
   const b=visibleBBox();if(b.w>b.e){bathy.hidden=true;return;}
