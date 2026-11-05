@@ -82,8 +82,12 @@
       "published_at": "2026-11-01T04:00:34Z",
       "first_seen": "2026-11-05T13:14:58.757965Z",
       "last_seen": "2026-11-05T13:14:58.757965Z",
-      "countries": [],
-      "regions": [],
+      "countries": [
+        "HR"
+      ],
+      "regions": [
+        "split"
+      ],
       "fish": [
         "Dentex"
       ],
@@ -91,7 +95,7 @@
         "Uferangeln"
       ],
       "publication_season": "Herbst",
-      "relevance": 0,
+      "relevance": 77,
       "evidence": "Erwähnung im Feed – nicht verifiziert"
     }
   ],
