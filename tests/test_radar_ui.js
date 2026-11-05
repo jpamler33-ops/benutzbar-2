@@ -51,7 +51,7 @@ async function flush(){await new Promise(resolve=>setTimeout(resolve,30));}
   assert.match(html,/&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html,/<script>alert/);
   assert.match(html,/Regionale Quellenhinweise/);
-  assert.match(html,/Ortsbezug/);
+  assert.match(html,/Regionsname stammt aus dem öffentlich sichtbaren Artikeltext/);
   ctx.CoastIntelUI.renderForum({id:'split',name:'Split / Dalmatien',country:'HR'});
   await flush();
   assert.match(radar.innerHTML,/CAR NA NIZ OD PEDLJA/);
