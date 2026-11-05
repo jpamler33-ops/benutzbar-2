@@ -104,17 +104,19 @@ async function loadRadar(host,region){
        <a href="${esc(/^https:\/\//.test(x.url)?x.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(x.title)} ↗</a>
        ${x.excerpt?`<p>${esc(x.excerpt)}</p>`:''}</article>`).join('')}</div></details>`:'';
    host.innerHTML=`<h3>Automatischer Quellen-Radar <span class="radar-beta">FREE</span></h3>
-    <div class="radar-stat-row"><div><strong>${rows.length}</strong><span>Regionale Treffer</span></div><div><strong>${seenSources.length}/${sources.filter(s=>s.enabled).length}</strong><span>Quellen erreichbar</span></div></div>
+    <div class="radar-stat-row"><div><strong>${rows.length}</strong><span>Regionale Quellenhinweise</span></div><div><strong>${seenSources.length}/${sources.filter(s=>s.enabled).length}</strong><span>Quellen erreichbar</span></div></div>
     <p class="small-muted">Letzter Quellcheck: ${esc(dt(latest))}. ${stale?'Datenstand älter als 48 Stunden.':''} ${failed.length?'Einzelne Feeds fehlgeschlagen.':''} Angezeigt wird der gespeicherte GitHub-Actions-Datenstand.</p>
     <div class="radar-source-tags">${sourceBadges}</div>
-    ${fishs.length?`<div class="radar-fishes"><b>Häufige Fisch-Erwähnungen:</b> ${fishs.map(([n,v])=>`${esc(n)} (${v})`).join(' · ')}</div>`:''}
+    ${fishs.length?`<div class="radar-fishes"><b>Fisch-Erwähnungen und Quellen-Schlagwörter:</b> ${fishs.map(([n,v])=>`${esc(n)} (${v})`).join(' · ')}</div>`:''}
     ${combinations.length?`<div class="radar-fishes"><b>Wiederkehrende Diskussionskombinationen (mind. 2 Quellen):</b><div>${combinations.map(x=>`${esc(x.fish)} + ${esc(x.theme)}: ${Number(x.mentions)||0} Beiträge aus ${Number(x.source_count)||0} Quellen`).join('<br>')}</div></div>`:''}
-    <p class="radar-warning">Erwähnungen ≠ Fänge; Veröffentlichungsmonat ≠ Fangmonat. Keine statistisch gesicherten Wind- oder Saisonkorrelationen.</p>
-    <div class="radar-entries">${rows.map(s=>`<article class="intel-source"><div class="intel-source-meta">AUTO-RSS · ${esc(dt(s.published_at))} · ${esc(s.source_id)} · Textsignal ${Number(s.relevance)||0}/100</div><a href="${esc(/^https:\/\//.test(s.url)?s.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a>${s.excerpt?`<p>${esc(s.excerpt)}</p>`:''}<p class="radar-tags">${esc((s.fish||[]).concat(s.themes||[]).join(' · ')||'Keine klare Fischart')}</p></article>`).join('')}</div>
+    <p class="radar-warning">Der Regionsname stammt aus dem öffentlich sichtbaren Artikeltext, nicht aus einer GPS-Ortung. Auch redaktionelle Fanggeschichten sind unbestätigte Eigenberichte: keine bestätigten Angelspots, keine unabhängige Fangprüfung. Fischarten können aus Schlagwörtern stammen; Veröffentlichungsmonat ≠ Fangmonat.</p>
+    ${rows.length?'<button class="radar-open-map" type="button">Region auf Karte untersuchen · exakten Angelplatz selbst wählen</button><p class="small-muted">OSM-Strukturen, EMODnet-Tiefen und Wettermodelle gehören zur selbst gewählten Kartenposition – nicht zum unbekannten Fangort des Artikels.</p>':''}
+    <div class="radar-entries">${rows.map(s=>`<article class="intel-source"><div class="intel-source-meta">${sourceList.find(src=>src.id===s.source_id)?.kind==='editorial'?'REDAKTIONELL':'RSS'} · REGIONSBEZUG IM TEXT · ${esc(dt(s.published_at))} · ${esc(s.source_id)} · Textsignal ${Number(s.relevance)||0}/100</div><a href="${esc(/^https:\/\//.test(s.url)?s.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a>${s.excerpt?`<p>${esc(s.excerpt)}</p>`:''}<p class="radar-tags">${esc((s.fish||[]).concat(s.themes||[]).join(' · ')||'Keine klare Fischart')}</p></article>`).join('')}</div>
     ${broadMarkup}
     ${!rows.length?'<p class="small-muted">Keine geografisch zugeordneten Treffer in dieser Region. Überregionale Artikel sind keine Spot-Belege.</p>':''}
     <button class="radar-refresh" type="button">Quellenstatus neu laden</button>`;
    host.querySelector('.radar-refresh')?.addEventListener('click',()=>loadRadar(host,region));
+   host.querySelector('.radar-open-map')?.addEventListener('click',()=>document.querySelector('[data-tab="discover"]')?.click());
  } catch(err) {
    if(seq!==radarRequest||!host.isConnected)return;
    host.innerHTML=`<h3>Automatischer Quellen-Radar <span class="radar-beta">FREE</span></h3><p class="intel-muted">Für den kostenlosen Foren-Radar liegt noch kein abrufbarer RSS-Datenstand vor. Nach GitHub-Pages-Veröffentlichung können die geplanten GitHub-Actions-Läufe den Datenstand erzeugen. Die übrige App funktioniert ohne Backend.</p><button class="radar-refresh" type="button">Verbindung prüfen</button>`;
