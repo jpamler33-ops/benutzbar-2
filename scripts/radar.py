@@ -159,7 +159,18 @@ def _regions(text: str) -> list[str]:
     result = []
     for region, (_, terms) in REGIONS.items():
         ambiguous = AMBIGUOUS_PLACES.get(region, set())
-        if any(matches(text, term) for term in terms if term not in ambiguous):
+        # A written negation is not evidence that a story takes place there.
+        # Stay conservative if a keyword appears only in an exclusion.
+        def positive_place(term):
+            if not matches(text, term):
+                return False
+            if term == 'makarska' and re.search(
+                r'\b(?:keine|nicht\s+in|nicht\s+bei|not\s+in|ohne)\s+makarska\b',
+                text, flags=re.I
+            ):
+                return False
+            return True
+        if any(positive_place(term) for term in terms if term not in ambiguous):
             result.append(region)
         elif any(re.search(GEOGRAPHIC_CONTEXT[name], text, flags=re.I) for name in ambiguous):
             result.append(region)
