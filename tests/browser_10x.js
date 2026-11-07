@@ -84,8 +84,8 @@ async function desktop(browser,url,round){
  check('Kategorie Filter',await page.locator('#spot-list .spot-card').count()===1);
  await page.locator('#explorer-btn').click();check('Entdecker Filter',await page.locator('#explorer-btn').getAttribute('aria-pressed')==='true');
  await page.locator('#spot-list .spot-card').first().click();check('Spotdetails',await page.locator('#detail-panel').isVisible());
+ check('Evidence labels distinguish known from unknown',await page.locator('.evidence-row').count()===3);
  if(round===0){
-  check('Evidence labels distinguish known from unknown',await page.locator('.evidence-row').count()===3);
   fs.mkdirSync(path.join(ROOT,'qa-screenshots'),{recursive:true});
   await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-desktop-detail.png')});
  }

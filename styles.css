@@ -156,3 +156,4 @@ html,body{background:var(--bg);color:var(--text)}
  .app:has(.drawer.expanded) .map-layers{top:54px;bottom:auto;left:10px}.app:has(.drawer.expanded) .map-attribution{top:103px;bottom:auto;left:10px}
 }
 @media(max-width:390px){.brand-sub{display:none}.regions-label{display:none}.nav-tab[data-tab="rules"]{display:none}.drawer.expanded{height:calc(100dvh - 190px)}.map-chip{font-size:9px}.evidence-row{grid-template-columns:78px 1fr}}
+.logo-mark{font-size:15px;font-weight:800;letter-spacing:-.09em}.nav-tab span{font-size:12px;font-weight:750;letter-spacing:.12em;border:1px solid #55716a;padding:3px 5px;min-width:28px}.nav-tab.selected span{border-color:#c6d4b7}.map-btn#pin-btn{font-size:10px;font-weight:800;letter-spacing:.04em}.round-button{font:700 20px Georgia,serif}@media(max-width:390px){.online-status{display:none}}
