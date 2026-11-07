@@ -132,13 +132,15 @@ async function mobile(browser,url,round){
  await mockNetwork(ctx);const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
  await page.goto(url);await page.waitForSelector('#tiles .tile');
+ await page.setViewportSize({width:375,height:667});
+ check('Small iPhone layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  if(round===0){
-  await page.setViewportSize({width:375,height:667});
-  check('Small iPhone layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   fs.mkdirSync(path.join(ROOT,'qa-screenshots'),{recursive:true});
   await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-375.png')});
-  await page.setViewportSize({width:390,height:844});
-  check('Large iPhone layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ }
+ await page.setViewportSize({width:390,height:844});
+ check('Large iPhone layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ if(round===0){
   await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-390.png')});
  }
  const box=await page.locator('#map').boundingBox();
