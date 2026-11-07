@@ -27,31 +27,34 @@ function attachSpot(spot,region){
  const link=document.createElement('button');link.type='button';link.className='intel-research-link';link.textContent='Passende Angelberichte und Foren öffnen ↗';link.onclick=()=>{selectTab('forum');};section.appendChild(link);
 }
 function renderForecast(host,data,region){
- const now=new Date();const groups=api.dayGroups(data.hours).filter(g=>g.records.some(h=>new Date(h.time).getTime()>=now.getTime()-60*60*1000));
+ const now=new Date();const local=h=>api.localIso(h.time,region.country);
+ const groups=api.dayGroups(data.hours,now,region.country).filter(g=>g.records.some(h=>api.modelDate(h.time).getTime()>=now.getTime()-60*60*1000));
  if(!groups.length){host.innerHTML='<div class="intel-error">Keine zukünftigen Modellstunden gefunden.</div>';return;}
- const best=api.relativeWindows(data.hours,now,3);
- const suggested=best.length?`<div class="intel-windows"><h4>Relativ geringere Modellbelastung</h4><p>Im 7-Tage-Vergleich, unabhängig von Fangchancen, Landzugang und lokalen Warnungen.</p><div class="intel-window-list">${best.map(h=>`<div><b>${esc(new Date(h.time).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}))} · ${esc(timestr(h.time))}</b><span>Belastung ${h.assessment.burden}/100</span></div>`).join('')}</div></div>`:'<div class="intel-error">Kein belastbarer Zeitvergleich: Wind- und Wellenwerte fehlen.</div>';
- host.innerHTML=`${data.errors.length?'<div class="intel-error">Teilweise verfügbar: '+data.errors.map(esc).join(' · ')+'</div>':''}${suggested}<div class="intel-days" id="intel-days" aria-label="Prognosetag wählen"></div><div id="intel-times" class="intel-times"></div><div id="intel-reading"></div><div class="intel-footnote">Wichtig: Strömung ist ein grob aufgelöstes Modell (~8 km). Windrichtung = Herkunft; Strömungsrichtung = Bewegungsziel. Für den konkreten Küstenzugang, die Brandung, geschützte Buchten und lokale Strudel fehlt eine exakte Messung. Modellwerte ersetzen keine Warnungen oder Ortskenntnis.</div>`;
+ const best=api.relativeWindows(data.hours,now,3,region.country);
+ const suggested=best.length?`<div class="intel-windows"><h4>Relativ geringere Modellbelastung</h4><p>Im 7-Tage-Vergleich, unabhängig von Fangchancen, Landzugang und lokalen Warnungen.</p><div class="intel-window-list">${best.map(h=>`<div><b>${esc(local(h).slice(5,10))} · ${esc(timestr(local(h)))}</b><span>Belastung ${h.assessment.burden}/100</span></div>`).join('')}</div></div>`:'<div class="intel-error">Kein belastbarer Zeitvergleich: Wind- und Wellenwerte fehlen.</div>';
+ host.innerHTML=`${data.errors.length?'<div class="intel-error">Teilweise verfügbar: '+data.errors.map(esc).join(' · ')+'</div>':''}<p class="intel-muted">Ortszeit ${region.country==='FR'?'Frankreich':'Kroatien'} · Modellstand ${esc(new Date(data.updatedAt).toLocaleString('de-DE'))}</p>${suggested}<div class="intel-days" id="intel-days" aria-label="Prognosetag wählen"></div><div id="intel-times" class="intel-times"></div><div id="intel-reading"></div><div class="intel-footnote">Wichtig: Strömung ist ein grob aufgelöstes Modell (~8 km). Windrichtung = Herkunft; Strömungsrichtung = Bewegungsziel. Für den konkreten Küstenzugang, die Brandung, geschützte Buchten und lokale Strudel fehlt eine exakte Messung. Modellwerte ersetzen keine Warnungen oder Ortskenntnis.</div>`;
  let groupIndex=0, hourIndex=0;
  const days=host.querySelector('#intel-days'),hours=host.querySelector('#intel-times'),reading=host.querySelector('#intel-reading');
  function updateDay(){days.replaceChildren();groups.forEach((g,i)=>{const d=document.createElement('button');d.className='intel-day'+(i===groupIndex?' active':'');const dt=new Date(g.day+'T12:00:00');d.innerHTML=`<b>${esc(dt.toLocaleDateString('de-DE',{weekday:'short'}))}</b><span>${esc(dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}))}</span>`;d.onclick=()=>{groupIndex=i;hourIndex=0;updateDay();updateHours();};days.appendChild(d);});}
- function updateHours(){hours.replaceChildren();const arr=groups[groupIndex].records.filter(h=>new Date(h.time)>=new Date(Date.now()-3600000));const pick=arr.filter(h=>[6,9,12,15,18,21].includes(parseInt(timestr(h.time).slice(0,2),10)));
+ function updateHours(){hours.replaceChildren();const arr=groups[groupIndex].records.filter(h=>api.modelDate(h.time)>=new Date(Date.now()-3600000));const pick=arr.filter(h=>[6,9,12,15,18,21].includes(parseInt(timestr(local(h)).slice(0,2),10)));
    const selected=pick.length?pick:arr.filter((_,i)=>i%3===0);
    if(!selected.length){reading.innerHTML='<div class="intel-error">Keine aktuellen Daten für diesen Tag.</div>';return;}
    if(hourIndex>=selected.length)hourIndex=0;
-   selected.forEach((h,i)=>{const b=document.createElement('button');b.className='intel-hour'+(i===hourIndex?' active':'');b.textContent=timestr(h.time);b.onclick=()=>{hourIndex=i;updateHours();};hours.appendChild(b);});
+   selected.forEach((h,i)=>{const b=document.createElement('button');b.className='intel-hour'+(i===hourIndex?' active':'');b.textContent=timestr(local(h));b.onclick=()=>{hourIndex=i;updateHours();};hours.appendChild(b);});
    renderHour(reading,selected[hourIndex],region);
  }
  updateDay();updateHours();
 }
 function renderHour(host,h,region){
- const season=api.season(Number(h.time.slice(5,7))),year=h.time.slice(0,4);
+ const local=api.localIso(h.time,region.country);
+ const season=api.season(Number(local.slice(5,7))),year=local.slice(0,4);
  const a=h.assessment;const burden=a.burden;
- const clues=api.regionalClues(region,Number(h.time.slice(5,7)));
+ const clues=api.regionalClues(region,Number(local.slice(5,7)));
  const pct=burden!==null?burden:0;
  const warnings=a.risks.filter(x=>!x.includes('fehlt')&&!x.includes('fehlen'));
  host.innerHTML=`<div class="intel-stats">
   <div class="intel-stat"><span>WIND</span><strong>${fmt(h.wind,0,' km/h')}</strong><small>aus ${compass(h.windFrom)} · Böen ${fmt(h.gust,0,' km/h')}</small></div>
+  <div class="intel-stat"><span>NIEDERSCHLAG</span><strong>${fmt(h.precipitation,1,' mm')}</strong><small>Modellwert dieser Stunde</small></div>
   <div class="intel-stat"><span>WELLEN</span><strong>${fmt(h.wave,1,' m')}</strong><small>aus ${compass(h.waveFrom)} · ${fmt(h.wavePeriod,0,' s')} Periode</small></div>
   <div class="intel-stat"><span>STRÖMUNG</span><strong>${fmt(h.current,2,' km/h')}</strong><small>nach ${compass(h.currentTo)} · grobes Modell</small></div>
   <div class="intel-stat"><span>WASSERTEMPERATUR</span><strong>${fmt(h.sst,1,' °C')}</strong><small>Oberfläche · Modell</small></div>

@@ -79,6 +79,10 @@ async function one(browser,url,round){
   await page.locator('#analyze').tap();
   await page.waitForFunction(()=>__COASTFINDER_TEST__.getState().analyzed);
   check('Overpass structure discovery',await page.locator('#spot-list .spot-card').count()===1);
+  check('No horizontal iPhone overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.locator('#map-return').tap();
+  check('One tap returns to map',await page.locator('#drawer').evaluate(el=>!el.classList.contains('expanded')));
+  await page.locator('.nav-tab[data-tab="discover"]').tap();
   const grid=await page.locator('#bathy-btn').count();
   check('Bathymetry control available',grid===1);
   await page.locator('#bathy-btn').tap();

@@ -104,3 +104,18 @@ assert.match(css,/\.map-attribution\{bottom:calc\(302px/);
 assert(!/referrerPolicy\s*=\s*['"]no-referrer['"]/.test(
   fs.readFileSync(path.join(__dirname,'..','app.js'),'utf8')));
 console.log('MAP_SMOKE_OK tiles='+originalCount+' zoom, pan, errors, attribution, Referer');
+(async()=>{
+  let resolveFetch;
+  env.fetch=()=>new Promise(resolve=>{resolveFetch=resolve;});
+  el('region-tabs').children[0].onclick();
+  const pending=el('analyze').onclick();
+  assert.equal(state.loading,true);
+  el('region-tabs').children[1].onclick();
+  assert.equal(state.loading,false,'Region change must release pending analysis');
+  resolveFetch({ok:true,json:async()=>({elements:[{type:'node',id:1,lat:44.87,lon:13.85,tags:{natural:'rock'}}]})});
+  await pending;
+  assert.equal(state.region.id,'zadar');
+  assert.equal(state.results.length,0,'Late response must not place Istria markers in Zadar');
+  assert.equal(state.analyzed,false);
+  console.log('MAP_STALE_ANALYSIS_OK');
+})().catch(e=>{console.error(e);process.exitCode=1;});

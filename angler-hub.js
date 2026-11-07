@@ -51,13 +51,13 @@ function useSpot(spot,region){
     country:region?.country==='FR'?'FR':'HR'};
   plan.checks={};persist();return true;
 }
-function modelForPlan(hours,date){
+function modelForPlan(hours,date,country='HR'){
   if(!Array.isArray(hours)||!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(date||''))return null;
-  // Model hours are already in the chosen region's local time zone.
   const target=date.slice(0,16);
-  return hours.find(h=>typeof h?.time==='string'&&h.time>=target&&
-    (Date.parse(h.time.slice(0,19)) - Date.parse(target))>=0&&
-    (Date.parse(h.time.slice(0,19)) - Date.parse(target))<=2*3600000)||null;
+  const local=h=>root.CoastIntel?.localIso?.(h.time,country)||h.time;
+  return hours.find(h=>typeof h?.time==='string'&&local(h)>=target&&
+    (Date.parse(local(h)) - Date.parse(target))>=0&&
+    (Date.parse(local(h)) - Date.parse(target))<=2*3600000)||null;
 }
 function render(region){
   const host=root.document?.getElementById('angeln-panel');
@@ -127,10 +127,10 @@ function render(region){
       if(!root.CoastIntel?.load)throw Error('Wettermodul nicht verfügbar');
       const forecast=await root.CoastIntel.load(chosen.lat,chosen.lon,chosen.country);
       if(serial!==weatherSerial||!host.isConnected)return;
-      const h=modelForPlan(forecast.hours,plan.time);
+      const h=modelForPlan(forecast.hours,plan.time,plan.spot?.country||region.country);
       if(!h){out.textContent='Keine passende Modellstunde innerhalb von zwei Stunden des geplanten Termins. Kein Ersatzwert.';return;}
       const fmt=(value,unit,d=1)=>Number.isFinite(value)?value.toFixed(d)+unit:'keine Daten';
-      out.innerHTML=`<b>${esc(h.time.replace('T',' '))} Uhr · Modell</b>
+      out.innerHTML=`<b>${esc((root.CoastIntel?.localIso?.(h.time,plan.spot?.country||region.country)||h.time).replace('T',' '))} Uhr Ortszeit · Modell</b>
         <p>Wind: ${fmt(h.wind,' km/h',0)} · Wellen: ${fmt(h.wave,' m')} · Strömung: ${fmt(h.current,' km/h',2)}</p>
         <p>Modellbelastung: ${Number.isFinite(h.assessment?.burden)?h.assessment.burden+'/100':'nicht berechenbar'}.
         ${h.assessment?.risks?.length?esc(h.assessment.risks.join(' · ')):'Keine Warnung aus den verfügbaren Modellvariablen; keine Sicherheitsfreigabe.'}</p>
