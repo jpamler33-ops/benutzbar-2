@@ -33,12 +33,13 @@ const doc={
   querySelectorAll:()=>[],
   addEventListener(){},
 };
+const pendingTimers=[];
 const env={
   document:doc,
   localStorage:{getItem:()=>null,setItem(){}},
   navigator:{onLine:true},
   requestAnimationFrame:callback=>callback(),
-  setTimeout:()=>1,
+  setTimeout:cb=>(pendingTimers.push(cb),pendingTimers.length),
   clearTimeout(){},
   AbortController, URLSearchParams, URL, console,
   Event:class Event{constructor(type){this.type=type;}},
@@ -64,6 +65,11 @@ assert.match(el('map-banner').textContent,/Kartenkacheln/);
 assert.equal(el('map-banner').hidden,false);
 const api=env.__COASTFINDER_TEST__;
 const state=api.getState();
+const fakeTarget={closest:()=>null};
+map.fire('pointerdown',{pointerId:7,target:fakeTarget,clientX:120,clientY:160});
+pendingTimers.at(-1)();
+assert.equal(state.pins.length,0,'Holding the map must not silently create a private pin');
+map.fire('pointerup',{pointerId:7,clientX:120,clientY:160});
 // Regression: the previous inverse projection was off by 180 degrees.
 // Check distinct hemispheres, the antimeridian, and different tile scales.
 for(const lat of [-75,-45,0,44.87,75]){
@@ -87,7 +93,6 @@ assert.equal(state.zoom,originalZoom+1);
 imgs=tileContainer.children.filter(e=>e.tag==='img'&&e.isConnected);
 assert(imgs.some(e=>e.src.includes('/13/')),'Zoom must load new tile level');
 const beforeLon=state.lon;
-const fakeTarget={closest:()=>null};
 map.fire('pointerdown',{pointerId:1,target:fakeTarget,clientX:160,clientY:200});
 map.fire('pointermove',{pointerId:1,clientX:210,clientY:200});
 map.fire('pointerup',{pointerId:1,clientX:210,clientY:200});

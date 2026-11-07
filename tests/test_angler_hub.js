@@ -3,6 +3,11 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
+const intel=require('../intel-engine.js');
+const dst=intel.joinHours({hourly:{time:['2026-10-25T00:00','2026-10-25T01:00','2026-10-25T02:00'],wind_speed_10m:[1,2,3]}},null,'HR');
+assert.deepEqual(dst.map(h=>h.time),['2026-10-25T02:00','2026-10-25T02:00','2026-10-25T03:00']);
+assert.equal(new Date(dst[0].instant).getTime()+3600000,new Date(dst[1].instant).getTime());
+assert.equal(intel.urls(44.87,13.85,'HR').weather.includes('timezone=UTC'),true);
 const source=fs.readFileSync(path.join(__dirname,'../angler-hub.js'),'utf8');
 for(let round=1;round<=10;round++){
  const storage=new Map(),location={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};

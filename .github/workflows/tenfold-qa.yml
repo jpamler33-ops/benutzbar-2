@@ -68,3 +68,10 @@ jobs:
           google-chrome --version
       - name: Run UI functionality 10 times in Chrome desktop + mobile emulation
         run: node tests/browser_10x.js
+      - name: Retain visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blacktide-visual-qa
+          path: qa-screenshots/
+          if-no-files-found: ignore

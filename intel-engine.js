@@ -9,7 +9,7 @@
 'use strict';
 const WEATHER='https://api.open-meteo.com/v1/forecast';
 const MARINE='https://marine-api.open-meteo.com/v1/marine';
-const W_VARS=['wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m'];
+const W_VARS=['wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m','precipitation'];
 const M_VARS=['wave_height','wave_direction','wave_period','swell_wave_height','sea_surface_temperature','ocean_current_velocity','ocean_current_direction','sea_level_height_msl'];
 const cache=new Map(), CACHE_MS=30*60*1000;
 function num(x){return typeof x==='number'&&Number.isFinite(x)?x:null;}
@@ -19,8 +19,8 @@ function season(month){if(!Number.isInteger(month)||month<1||month>12)throw new 
 function validateCoord(lat,lon){if(!Number.isFinite(lat)||Math.abs(lat)>90||!Number.isFinite(lon)||Math.abs(lon)>180)throw Error('Ungültige Koordinaten');}
 function urls(lat,lon,country='HR'){
   validateCoord(lat,lon);
-  const tz=country==='FR'?'Europe/Paris':'Europe/Zagreb';
-  const base={latitude:lat.toFixed(5),longitude:lon.toFixed(5),timezone:tz,forecast_days:'7'};
+  // UTC timestamps are unambiguous across browser locales and DST transitions.
+  const base={latitude:lat.toFixed(5),longitude:lon.toFixed(5),timezone:'UTC',forecast_days:'7'};
   const weather=new URL(WEATHER);for(const[k,v]of Object.entries({...base,hourly:W_VARS.join(','),wind_speed_unit:'kmh'}))weather.searchParams.set(k,v);
   const marine=new URL(MARINE);for(const[k,v]of Object.entries({...base,hourly:M_VARS.join(','),cell_selection:'sea',wind_speed_unit:'kmh'}))marine.searchParams.set(k,v);
   return {weather:weather.toString(),marine:marine.toString()};
@@ -47,20 +47,26 @@ async function load(lat,lon,country='HR',signal){
   const marine=results[1].status==='fulfilled'?results[1].value:null;
   const errors=results.map((x,i)=>x.status==='rejected'?`${i?'Marine':'Wetter'}: ${String(x.reason?.message||'Abruf fehlgeschlagen')}`:null).filter(Boolean);
   if(!weather&&!marine)throw Error(errors.join(' · ')||'Keine Modelldaten verfügbar');
-  const hours=joinHours(weather,marine);
+  const hours=joinHours(weather,marine,country);
   const value={hours,errors,weatherLoaded:!!weather,marineLoaded:!!marine,weatherApi:q.weather,marineApi:q.marine,updatedAt:Date.now(),cached:false};
   cache.set(key,{value,at:Date.now()});return value;
 }
-function joinHours(w,m){
+function localHour(instant,country){
+  const zone=country==='FR'?'Europe/Paris':'Europe/Zagreb';
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(instant));
+  const value=Object.fromEntries(parts.map(p=>[p.type,p.value]));
+  return `${value.year}-${value.month}-${value.day}T${value.hour}:${value.minute}`;
+}
+function joinHours(w,m,country='HR'){
   // Weather and marine models may differ by timestamp or coverage. Never index-join arrays.
   const wm=new Map(), mm=new Map();
   if(w?.hourly?.time)w.hourly.time.forEach((t,i)=>wm.set(t,i));
   if(m?.hourly?.time)m.hourly.time.forEach((t,i)=>mm.set(t,i));
   const times=[...new Set([...wm.keys(),...mm.keys()])].sort();
   const read=(obj,key,index)=>index===undefined?null:num(obj?.hourly?.[key]?.[index]);
-  return times.map(time=>{
-    const wi=wm.get(time),mi=mm.get(time);
-    const h={time,wind:read(w,'wind_speed_10m',wi),windFrom:read(w,'wind_direction_10m',wi),gust:read(w,'wind_gusts_10m',wi),airTemp:read(w,'temperature_2m',wi),wave:read(m,'wave_height',mi),waveFrom:read(m,'wave_direction',mi),wavePeriod:read(m,'wave_period',mi),swell:read(m,'swell_wave_height',mi),sst:read(m,'sea_surface_temperature',mi),current:read(m,'ocean_current_velocity',mi),currentTo:read(m,'ocean_current_direction',mi),seaLevel:read(m,'sea_level_height_msl',mi)};
+  return times.map(utc=>{
+    const wi=wm.get(utc),mi=mm.get(utc),instant=utc.endsWith('Z')?utc:utc+'Z';
+    const h={time:localHour(instant,country),instant,wind:read(w,'wind_speed_10m',wi),windFrom:read(w,'wind_direction_10m',wi),gust:read(w,'wind_gusts_10m',wi),precipitation:read(w,'precipitation',wi),airTemp:read(w,'temperature_2m',wi),wave:read(m,'wave_height',mi),waveFrom:read(m,'wave_direction',mi),wavePeriod:read(m,'wave_period',mi),swell:read(m,'swell_wave_height',mi),sst:read(m,'sea_surface_temperature',mi),current:read(m,'ocean_current_velocity',mi),currentTo:read(m,'ocean_current_direction',mi),seaLevel:read(m,'sea_level_height_msl',mi)};
     h.assessment=assess(h);return h;
   });
 }
@@ -99,7 +105,7 @@ function dayGroups(hours,now=new Date()){
 // Relative model-load windows, not advice to enter a coast or prediction of fish activity.
 function relativeWindows(hours,now=new Date(),maxResults=3){
   const future=hours.filter(h=>{
-    const at=new Date(h.time);return Number.isFinite(at.getTime())&&at.getTime()>=now.getTime()&&h.assessment?.burden!==null;
+    const at=new Date(h.instant||h.time);return Number.isFinite(at.getTime())&&at.getTime()>=now.getTime()&&h.assessment?.burden!==null;
   });
   const perWindow=new Map();
   for(const h of future){

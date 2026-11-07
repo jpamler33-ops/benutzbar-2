@@ -84,6 +84,11 @@ async function desktop(browser,url,round){
  check('Kategorie Filter',await page.locator('#spot-list .spot-card').count()===1);
  await page.locator('#explorer-btn').click();check('Entdecker Filter',await page.locator('#explorer-btn').getAttribute('aria-pressed')==='true');
  await page.locator('#spot-list .spot-card').first().click();check('Spotdetails',await page.locator('#detail-panel').isVisible());
+ check('Evidence labels distinguish known from unknown',await page.locator('.evidence-row').count()===3);
+ if(round===0){
+  fs.mkdirSync(path.join(ROOT,'qa-screenshots'),{recursive:true});
+  await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-desktop-detail.png')});
+ }
  await page.locator('#save-fav').click();await page.locator('.nav-tab[data-tab="favorites"]').click();
  check('Favoriten',await page.locator('#fav-cards .spot-card').count()===1);
  await page.locator('.nav-tab[data-tab="discover"]').click();await page.locator('#spot-list .spot-card').first().click();
@@ -127,6 +132,17 @@ async function mobile(browser,url,round){
  await mockNetwork(ctx);const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
  await page.goto(url);await page.waitForSelector('#tiles .tile');
+ await page.setViewportSize({width:375,height:667});
+ check('Small iPhone layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ if(round===0){
+  fs.mkdirSync(path.join(ROOT,'qa-screenshots'),{recursive:true});
+  await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-375.png')});
+ }
+ await page.setViewportSize({width:390,height:844});
+ check('Large iPhone layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ if(round===0){
+  await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-390.png')});
+ }
  const box=await page.locator('#map').boundingBox();
  check('Mobile Karte sichtbar',box.width>=375&&box.height>250);
  const attr=await page.locator('.map-attribution').boundingBox();
