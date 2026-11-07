@@ -85,23 +85,33 @@ async function one(browser,url,round){
   check('Bathymetry toggle available',await page.locator('#bathy-btn').getAttribute('aria-pressed')==='true');
   await page.waitForFunction(()=>document.querySelector('#bathy')?.hidden===false);
   check('Bathymetry image only visible after load',await page.locator('#bathy').evaluate(img=>img.complete&&img.naturalWidth>0&&!img.hidden));
+  check('Depth WMS buffered beyond viewport',await page.locator('#bathy').evaluate(img=>{
+    const m=document.querySelector('#map');return img.clientWidth>=m.clientWidth*1.9&&img.clientHeight>=m.clientHeight*1.9&&parseFloat(img.style.left)<0&&parseFloat(img.style.top)<0;
+  }));
+  const originalDepthUrl=await page.locator('#bathy').getAttribute('src');
   // Regression from the user's actual iPhone: the overlay must follow the map while dragging.
   await page.mouse.move(dimensions.x+100,dimensions.y+150);
   await page.mouse.down();
   await page.mouse.move(dimensions.x+145,dimensions.y+150,{steps:4});
   check('Depth overlay follows map during drag',await page.locator('#bathy').evaluate(img=>!img.hidden&&img.style.transform.includes('translate3d(')));
   await page.mouse.up();
+  check('Small depth pan does not reload WMS',await page.locator('#bathy').getAttribute('src')===originalDepthUrl);
   await page.locator('#bathy-btn').tap();
   const habitat=page.locator('#habitat-btn');
   await habitat.tap();
   check('EUSeaMap layer available',await habitat.getAttribute('aria-pressed')==='true');
   await page.waitForFunction(()=>document.querySelector('.habitat-wms')?.hidden===false);
   check('Habitat image only visible after load',await page.locator('.habitat-wms').evaluate(img=>img.complete&&img.naturalWidth>0&&!img.hidden));
+  check('Habitat WMS buffered beyond viewport',await page.locator('.habitat-wms').evaluate(img=>{
+    const m=document.querySelector('#map');return img.clientWidth>=m.clientWidth*1.9&&img.clientHeight>=m.clientHeight*1.9&&parseFloat(img.style.left)<0&&parseFloat(img.style.top)<0;
+  }));
+  const originalHabitatUrl=await page.locator('.habitat-wms').getAttribute('src');
   await page.mouse.move(dimensions.x+110,dimensions.y+165);
   await page.mouse.down();
   await page.mouse.move(dimensions.x+155,dimensions.y+165,{steps:4});
   check('Habitat overlay follows map during drag',await page.locator('.habitat-wms').evaluate(img=>!img.hidden&&img.style.transform.includes('translate3d(')));
   await page.mouse.up();
+  check('Small habitat pan does not reload WMS',await page.locator('.habitat-wms').getAttribute('src')===originalHabitatUrl);
   await habitat.tap();
   // The real iPhone screen recording showed ~115m raster cells as huge,
   // misleading brown blocks on detailed coastal map zooms.
