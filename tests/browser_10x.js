@@ -39,6 +39,7 @@ async function desktop(browser,url,round){
  await page.goto(url);await page.waitForFunction(()=>document.getElementById('online-status').textContent.includes('BEREIT'));
  check('Kartenkacheln',await page.locator('#tiles img').count()>2);
  const box=await page.locator('#map').boundingBox();check('Kartenlayout',box.width>400&&box.height>250);
+ if(round===0){fs.mkdirSync(path.join(ROOT,'qa-screenshots'),{recursive:true});await page.screenshot({path:path.join(ROOT,'qa-screenshots','blacktide-chrome-desktop.png')});}
  const invariants=await page.evaluate(()=>{
    const g=window.CoastGeo,c=window.CoastIntel,st=window.CoastFreeStore,t=window.__COASTFINDER_TEST__;
    const throwCheck=fn=>{try{fn();return false;}catch{return true;}};
@@ -84,11 +85,13 @@ async function desktop(browser,url,round){
  check('Kategorie Filter',await page.locator('#spot-list .spot-card').count()===1);
  await page.locator('#explorer-btn').click();check('Entdecker Filter',await page.locator('#explorer-btn').getAttribute('aria-pressed')==='true');
  await page.locator('#spot-list .spot-card').first().click();check('Spotdetails',await page.locator('#detail-panel').isVisible());
+ check('Spot evidence separates source from unknown',await page.locator('.spot-evidence').innerText().then(x=>x.includes('BELEGT')&&x.includes('ABGELEITET')&&x.includes('UNBEKANNT')));
  await page.locator('#save-fav').click();await page.locator('.nav-tab[data-tab="favorites"]').click();
  check('Favoriten',await page.locator('#fav-cards .spot-card').count()===1);
  await page.locator('.nav-tab[data-tab="discover"]').click();await page.locator('#spot-list .spot-card').first().click();
  await page.locator('#intel-load').click();await page.waitForSelector('#intel-live .intel-days');
  check('Wetter und Wellen',await page.locator('.intel-day').count()>0);
+ check('Local forecast time and precipitation visible',await page.locator('#intel-live').innerText().then(x=>x.includes('Europe/Zagreb')&&x.includes('NIEDERSCHLAG')));
  await page.locator('.geo-run').click();await page.waitForSelector('.geo-metrics');
  check('Tiefenprofil',await page.locator('.geo-profile-svg').count()===1);
  await page.locator('.geo-show-layer').click();check('Lebensraumkarte',await page.locator('#habitat-btn').getAttribute('aria-pressed')==='true');
@@ -129,6 +132,7 @@ async function mobile(browser,url,round){
  await page.goto(url);await page.waitForSelector('#tiles .tile');
  const box=await page.locator('#map').boundingBox();
  check('Mobile Karte sichtbar',box.width>=375&&box.height>250);
+ check('Mobile viewport without horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  const attr=await page.locator('.map-attribution').boundingBox();
  check('Mobile Quellenangabe',!!attr&&attr.y>=0&&attr.y+attr.height<844);
  const before=await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom);

@@ -1,6 +1,14 @@
 'use strict';
 const assert=require('node:assert/strict');
 const geo=require('../coast-geo.js');
+const intel=require('../intel-engine.js');
+const joined=intel.joinHours({hourly:{time:['2026-11-07T13:00'],wind_speed_10m:[12],precipitation:[0]}},null);
+assert.equal(joined[0].precipitation,0,'Real zero precipitation remains zero');
+assert.equal(joined[0].wave,null,'Missing marine coverage remains unknown');
+assert.equal(intel.localHour(new Date('2026-03-29T01:30:00Z'),'FR'),'2026-03-29T03:00','French daylight saving jump');
+assert.equal(intel.localHour(new Date('2026-10-25T01:30:00Z'),'HR'),'2026-10-25T02:00','Croatian autumn clock change');
+const sample=[{time:'2026-03-29T01:00',assessment:{burden:20}},{time:'2026-03-29T03:00',assessment:{burden:30}}];
+assert.equal(intel.relativeWindows(sample,new Date('2026-03-29T01:30:00Z'),3,'FR')[0].time,'2026-03-29T03:00','Do not show past local hours after DST jump');
 
 const north=geo.destination(44.12,15.23,0,1000);
 assert(north.lat>44.12);
@@ -22,7 +30,7 @@ const wms=new URL(geo.habitatUrl({s:43.5,w:16.4,n:43.6,e:16.5},800,700));
 assert.equal(wms.searchParams.get('layers'),'eusm2025_eunis2019_400');
 assert.equal(wms.searchParams.get('bbox'),'43.500000,16.400000,43.600000,16.500000');
 assert.equal(wms.searchParams.get('width'),'512');
-assert.equal(wms.searchParams.get('height'),'512');
+assert.equal(wms.searchParams.get('height'),'448');
 const nearest=geo.nearestModelHour([{time:'2026-11-01T13:00'},{time:'2026-11-01T14:00'}],'FR',new Date('2026-11-01T12:40:00Z'));
 assert.equal(nearest.time,'2026-11-01T14:00');
 assert.equal(geo.nearestModelHour([], 'HR'),null);

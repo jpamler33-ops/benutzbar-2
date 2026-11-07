@@ -58,6 +58,8 @@ async function one(browser,url,round){
   check('OSM tile loading in WebKit',await page.locator('#tiles img').count()>=4);
   const dimensions=await page.locator('#map').boundingBox();
   check('iPhone-sized map layout',dimensions&&dimensions.width>=370&&dimensions.height>=250);
+  check('No mobile horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  if(round<2){fs.mkdirSync(path.join(ROOT,'qa-screenshots'),{recursive:true});await page.screenshot({path:path.join(ROOT,'qa-screenshots',`blacktide-webkit-${screen.width}x${screen.height}.png`)});}
   const attribution=await page.locator('.map-attribution').boundingBox();
   check('OpenStreetMap attribution visible',attribution&&attribution.y>=0&&attribution.y+attribution.height<screen.height);
   const source=await page.locator('#tiles img').first().evaluate(el=>el.referrerPolicy);
@@ -132,6 +134,7 @@ async function one(browser,url,round){
   await page.locator('.nav-tab[data-tab="discover"]').tap();
   check('Spot list accessible after layer controls',await page.locator('#spot-list .spot-card').first().isVisible());
   await page.locator('#spot-list .spot-card').first().tap();
+  check('Spot evidence in mobile detail',await page.locator('.spot-evidence').innerText().then(x=>x.includes('BELEGT')&&x.includes('UNBEKANNT')));
   await page.locator('#spot-plan').tap();
   check('Plan opens from selected spot',await page.locator('#angeln-panel').isVisible());
   check('Planned spot coordinates retained',await page.locator('.angler-spot').innerText().then(x=>x.includes('44.8690')));

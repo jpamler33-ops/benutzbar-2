@@ -68,3 +68,10 @@ jobs:
           google-chrome --version
       - name: Run UI functionality 10 times in Chrome desktop + mobile emulation
         run: node tests/browser_10x.js
+      - name: Keep BLACKTIDE desktop visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blacktide-chrome-layout
+          path: qa-screenshots/blacktide-chrome-desktop.png
+          if-no-files-found: ignore
