@@ -44,7 +44,7 @@ def revalidate_previous(rows, sources):
             if (source.get('editorial_adriatic') and not radar.AD_HEADLINE.search(title)
                     and not radar.GEAR_HEADLINE.search(title)
                     and (not item.get('regions') or set(item['regions']) <= set(tags['regions']))):
-                kept.append(item)
+                kept.append({**item, 'fish': tags['fish']})
             continue
         kept.append({**item, **{k:v for k,v in tags.items() if k != 'relevant'}})
     return kept

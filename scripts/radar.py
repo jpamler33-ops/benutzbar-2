@@ -277,11 +277,11 @@ def parse_feed(blob: bytes, source: dict) -> list[dict]:
             continue
         published = iso_date(pub)
         # Geography and relevance must come from the article heading/excerpt.
-        # Publisher category tags can enrich fish/theme labels but cannot create
-        # a fishing location or turn a generic item into a regional spot.
+        # Publisher categories may enrich themes, but not fish evidence,
+        # fishing location or regional relevance.
         text_tags = classify(title, summary, published)
         tags = classify(title, summary + ' ' + ' '.join(category_labels), published)
-        for key in ('regions', 'countries', 'relevant', 'relevance'):
+        for key in ('regions', 'countries', 'fish', 'relevant', 'relevance'):
             tags[key] = text_tags[key]
         if not tags['relevant']:
             # Special-source coastal editorial report: useful reading without
