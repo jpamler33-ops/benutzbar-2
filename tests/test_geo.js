@@ -1,6 +1,15 @@
 'use strict';
 const assert=require('node:assert/strict');
 const geo=require('../coast-geo.js');
+const intel=require('../intel-engine.js');
+assert.equal(new URL(intel.urls(44.87,13.85,'HR').weather).searchParams.get('timezone'),'UTC');
+assert.equal(intel.localIso('2026-03-29T00:00','HR'),'2026-03-29T01:00');
+assert.equal(intel.localIso('2026-03-29T01:00','HR'),'2026-03-29T03:00','DST spring jump');
+assert.equal(intel.localIso('2026-10-25T00:00','FR'),'2026-10-25T02:00');
+assert.equal(intel.localIso('2026-10-25T01:00','FR'),'2026-10-25T02:00','DST repeated hour');
+assert.equal(intel.modelDate('2026-11-07T12:00').toISOString(),'2026-11-07T12:00:00.000Z');
+assert.equal(intel.joinHours({hourly:{time:['2026-11-07T12:00'],precipitation:[0]}},null)[0].precipitation,0);
+assert.equal(intel.joinHours(null,{hourly:{time:['2026-11-07T12:00']}})[0].precipitation,null);
 
 const north=geo.destination(44.12,15.23,0,1000);
 assert(north.lat>44.12);
@@ -24,7 +33,7 @@ assert.equal(wms.searchParams.get('bbox'),'43.500000,16.400000,43.600000,16.5000
 assert.equal(wms.searchParams.get('width'),'512');
 assert.equal(wms.searchParams.get('height'),'512');
 const nearest=geo.nearestModelHour([{time:'2026-11-01T13:00'},{time:'2026-11-01T14:00'}],'FR',new Date('2026-11-01T12:40:00Z'));
-assert.equal(nearest.time,'2026-11-01T14:00');
+assert.equal(nearest.time,'2026-11-01T13:00','The model hour is UTC, independent of device zone');
 assert.equal(geo.nearestModelHour([], 'HR'),null);
 (async()=>{
   let requests=0;

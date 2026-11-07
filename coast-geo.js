@@ -79,6 +79,7 @@ function habitatUrl(bounds,width,height){
 }
 function nearestModelHour(hours,country,at=new Date()){
   if (!Array.isArray(hours)) return null;
+  if (globalThis.CoastIntel?.modelDate) return hours.find(h=>typeof h.time==='string'&&globalThis.CoastIntel.modelDate(h.time)>=at)||null;
   const timezone=country==='FR'?'Europe/Paris':'Europe/Zagreb';
   const parts=new Intl.DateTimeFormat('en-GB',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(at);
   const part=n=>parts.find(p=>p.type===n)?.value;
@@ -122,7 +123,7 @@ function attachSpot(spot,region){
     }
     if(weather.status==='fulfilled'){
       const h=nearestModelHour(weather.value.hours,region.country);
-      html+=h?`<div class="geo-weather"><b>Nächste Modellstunde · ${clean(h.time.replace('T',' '))}</b><p>Wind ${isNumber(h.wind)?h.wind.toFixed(0)+' km/h':'–'} · Wellen ${isNumber(h.wave)?h.wave.toFixed(1)+' m':'–'} · Strömung ${isNumber(h.current)?h.current.toFixed(2)+' km/h':'–'} · Oberflächentemperatur ${isNumber(h.sst)?h.sst.toFixed(1)+' °C':'–'}</p><p>Modellbelastung: ${h.assessment?.burden===null||h.assessment?.burden===undefined?'nicht berechenbar':h.assessment.burden+'/100'} (keine Fangchance).</p></div>`:'<div class="geo-warning">Keine aktuelle Modellstunde verfügbar.</div>';
+      html+=h?`<div class="geo-weather"><b>Nächste Modellstunde · ${clean((globalThis.CoastIntel?.localIso?.(h.time,region.country)||h.time).replace('T',' '))} Ortszeit</b><p>Wind ${isNumber(h.wind)?h.wind.toFixed(0)+' km/h':'–'} · Wellen ${isNumber(h.wave)?h.wave.toFixed(1)+' m':'–'} · Strömung ${isNumber(h.current)?h.current.toFixed(2)+' km/h':'–'} · Oberflächentemperatur ${isNumber(h.sst)?h.sst.toFixed(1)+' °C':'–'}</p><p>Modellbelastung: ${h.assessment?.burden===null||h.assessment?.burden===undefined?'nicht berechenbar':h.assessment.burden+'/100'} (keine Fangchance).</p></div>`:'<div class="geo-warning">Keine aktuelle Modellstunde verfügbar.</div>';
       if(weather.value.errors?.length)html+=`<p class="geo-hint">Teilweise fehlend: ${clean(weather.value.errors.join(' · '))}</p>`;
     }else html+=`<div class="geo-warning">Wetter-/Meeresmodelle nicht verfügbar: ${clean(weather.reason?.message||'Fehler')}. Kein Ersatzwert erzeugt.</div>`;
     html+=`<p class="geo-hint">EUSeaMap EUNIS 2019 zeigt modellierte Meeresboden-Lebensräume, keine direkte Substratmessung. Keine punktgenaue Fels-/Sand-Bestätigung für diesen Pin. Für Weg, Verbote, Brandung und Sicherheit gelten lokale Quellen.</p>`;

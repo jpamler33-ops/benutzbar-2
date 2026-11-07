@@ -84,11 +84,13 @@ async function desktop(browser,url,round){
  check('Kategorie Filter',await page.locator('#spot-list .spot-card').count()===1);
  await page.locator('#explorer-btn').click();check('Entdecker Filter',await page.locator('#explorer-btn').getAttribute('aria-pressed')==='true');
  await page.locator('#spot-list .spot-card').first().click();check('Spotdetails',await page.locator('#detail-panel').isVisible());
+ check('Spot evidence labels',await page.locator('.evidence-panel').innerText().then(x=>x.includes('BELEGT')&&x.includes('ABGELEITET')&&x.includes('UNBEKANNT')));
  await page.locator('#save-fav').click();await page.locator('.nav-tab[data-tab="favorites"]').click();
  check('Favoriten',await page.locator('#fav-cards .spot-card').count()===1);
  await page.locator('.nav-tab[data-tab="discover"]').click();await page.locator('#spot-list .spot-card').first().click();
  await page.locator('#intel-load').click();await page.waitForSelector('#intel-live .intel-days');
  check('Wetter und Wellen',await page.locator('.intel-day').count()>0);
+ check('Precipitation preserves zero',await page.locator('#intel-reading').innerText().then(x=>x.includes('0.0 mm')));
  await page.locator('.geo-run').click();await page.waitForSelector('.geo-metrics');
  check('Tiefenprofil',await page.locator('.geo-profile-svg').count()===1);
  await page.locator('.geo-show-layer').click();check('Lebensraumkarte',await page.locator('#habitat-btn').getAttribute('aria-pressed')==='true');
@@ -129,6 +131,8 @@ async function mobile(browser,url,round){
  await page.goto(url);await page.waitForSelector('#tiles .tile');
  const box=await page.locator('#map').boundingBox();
  check('Mobile Karte sichtbar',box.width>=375&&box.height>250);
+ check('No horizontal mobile overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ check('Map return touch target',await page.locator('#map-return').evaluate(el=>el.getBoundingClientRect().height>=42));
  const attr=await page.locator('.map-attribution').boundingBox();
  check('Mobile Quellenangabe',!!attr&&attr.y>=0&&attr.y+attr.height<844);
  const before=await page.evaluate(()=>__COASTFINDER_TEST__.getState().zoom);

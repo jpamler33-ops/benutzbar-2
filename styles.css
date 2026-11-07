@@ -113,3 +113,78 @@
 .angler-legal{margin-top:12px;padding:10px;border:1px solid #456c7b;border-radius:9px;background:#0a1c2c}.angler-legal strong{font-size:11px;color:#a9efe0}.angler-legal a{display:block;font-size:11px;margin-top:8px;color:#8ae4db;overflow-wrap:anywhere}
 .angler-save-status{color:#a1c6c2;font-size:10px;text-align:center;padding:10px}
 @media(max-width:440px){.angler-hub{padding:12px 12px 25px;gap:10px}.angler-form{grid-template-columns:1fr}.angler-form label:last-child{grid-column:auto}.bottom-nav .nav-tab{font-size:8px;min-width:0;padding-left:1px;padding-right:1px}}
+
+/* BLACKTIDE · a restrained chart-room system. Legacy panels inherit these tokens. */
+:root{--bg:#07131a;--panel:#0c1d24;--panel2:#102831;--line:#31434a;--muted:#a8b9ba;--ice:#e7eee8;--aqua:#93bcae;--text:#f0f0e8;--gold:#d4bd85;--alert:#dfad8c}
+html,body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.005em}
+.app{background:var(--bg)}
+.topbar{background:#07141b;border-bottom-color:#33464a}
+.logo-mark{border-radius:4px;border-color:#5b857e;color:#c5d9c9;background:#102b31;box-shadow:none}
+.brand{font-size:16px;letter-spacing:.16em;font-weight:800;color:#f0efe5}
+.brand span{color:#a9c3b7}
+.brand-sub{color:#b5b9ad;letter-spacing:.19em;font-size:9px}
+.online-status{letter-spacing:.12em;color:#d3d9ca}
+.regions-bar{background:#102028;border-bottom-color:#3a4e50}
+.region-tab{border-radius:4px!important;box-shadow:none!important}
+.region-tab.active{background:#b9caba!important;color:#0b2629!important;border-color:#b9caba!important}
+.region-tab.active .flag{color:#163c3c!important}
+.stage{background:#a8c3c5}
+.map-chip,.zoom-indicator,.map-tool-stack,.layer-btn{background:#10252be8!important;border:1px solid #50666a!important;border-radius:5px!important;box-shadow:0 3px 10px #0b1d2530!important}
+.map-chip,.zoom-indicator{color:#f2f0e6!important;letter-spacing:.1em}
+.map-btn{min-width:44px;min-height:44px;color:#f2f0e6}
+.map-btn:hover,.layer-btn:hover{background:#29434a!important}
+.map-layers{max-width:260px}
+.layer-btn{min-height:42px;color:#f0f0e8!important}
+.map-attribution{color:#172c30;background:#f4f1e9df;font-size:10px}
+.drawer{background:#0e2027;border-left-color:#43575a}
+.drawer-header{border-bottom-color:#405559;padding:19px 21px 15px}
+.drawer-header h1{font-size:22px;letter-spacing:-.025em;margin-top:7px}
+.eyebrow,.filter-title{color:#aac5b9!important;letter-spacing:.17em}
+.drawer-header .subheading{color:#bbc6c1!important;font-size:11px!important;line-height:1.4}
+.count-box{border-radius:4px;background:#172e33;border-color:#455b5b}
+.map-return{display:none;background:#233d40;color:#f4f0df;border:1px solid #69857d;border-radius:4px;font-size:12px;font-weight:700;padding:10px 12px;white-space:nowrap}
+.map-return span{margin-left:7px}
+.analyze-button{background:#c9d7bd;border:1px solid #d8e2ca;border-radius:5px;color:#122c2d;box-shadow:none;font-weight:800;letter-spacing:.1em}
+.analyze-button:hover{background:#e0e7d0}
+.filter-pill,.explorer-toggle{border-radius:4px!important}
+.spot-card,.info-card,.intel-box,.geo-intel,.angler-intro,.angler-spot,.angler-section,.catch-entry,.intel-source{background:#142b32;border:1px solid #455d5d;border-radius:5px;box-shadow:none}
+.spot-card{min-height:60px;padding:10px 12px}
+.spot-card:hover,.spot-card.active{background:#243e40;border-color:#9cbba8}
+.spot-icon{border-radius:3px;background:#2b4647;color:#d7ded0}
+.score{color:#bbd2c4}.score small{font-size:10px;color:#c4d0c6;letter-spacing:.08em}
+.empty-icon{border-radius:4px;border-style:solid;width:52px;height:52px;font-size:29px}
+.bottom-nav{background:#0a1b22;border-top-color:#405458}
+.nav-tab{color:#afc0bf;font-size:11px;min-height:56px;font-weight:650}
+.nav-tab.selected{color:#f1efd9;background:#1d3539;box-shadow:inset 0 3px #b3c9b2}
+.nav-tab span{font-size:19px}
+.evidence-panel{border-top:1px solid #526764;border-bottom:1px solid #526764;margin:17px 0;padding:12px 0}
+.evidence-panel h3{font-size:15px;margin:2px 0 12px}
+.evidence-panel p{font-size:12px;line-height:1.5;color:#d1dcd1;margin:7px 0}
+.evidence-panel b{font-size:10px;letter-spacing:.09em;color:#d5c894;display:inline-block;min-width:87px}
+.evidence-panel small{display:block;color:#b9c4bd;font-size:11px;line-height:1.45;margin-top:12px}
+.intel-stat,.intel-load-card,.intel-season,.geo-metrics>div,.catch-metrics>div{background:#10252c;border-color:#425c5d;border-radius:4px;box-shadow:none}
+.intel-meter span{background:#b5c8a9}
+.intel-day,.intel-hour{border-radius:4px;min-height:44px}
+.intel-day.active,.intel-hour.active{background:#b7cdb8;color:#102b2e;border-color:#d6e2ce}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #e0d19f;outline-offset:2px}
+@media(max-width:900px){
+ .app{min-height:0;grid-template-rows:58px 49px minmax(0,1fr)}
+ .topbar{padding:0 14px}.brand{font-size:14px}.brand-sub{font-size:8px}.logo-mark{width:33px;height:33px}
+ .regions-bar{padding:0 12px;gap:8px}.region-tabs{gap:5px}.region-tab{min-height:37px}
+ .map-top-left{top:10px;left:10px}.map-tool-stack{top:10px;right:10px}
+ .map-layers{left:10px;bottom:calc(239px + env(safe-area-inset-bottom,0px))}
+ .map-attribution{bottom:calc(227px + env(safe-area-inset-bottom,0px));right:5px}
+ .drawer{height:218px;border-radius:9px 9px 0 0;border-color:#506565;box-shadow:0 -6px 18px #07161d8c}
+ .drawer.expanded{height:min(67dvh,620px,calc(100dvh - 218px))}
+ .drawer-grab{height:15px;min-height:15px}.drawer-header{padding:5px 14px 9px;gap:8px}
+ .drawer-header h1{font-size:19px;margin:4px 0 2px}.drawer-header .subheading{font-size:10px!important}
+ .count-box{display:none}.map-return{display:block;min-height:42px}
+ .cta-block{padding:10px 14px}.analyze-button{height:44px}
+ .cta-hint{margin:5px 0;font-size:10px}
+ .bottom-nav{height:59px;min-height:59px}.nav-tab{font-size:10px;min-height:59px;gap:1px}
+ .nav-tab span{font-size:18px}
+ .app:has(.drawer.expanded) .map-attribution{top:auto;bottom:calc(min(67dvh,620px,100dvh - 218px) + env(safe-area-inset-bottom,0px));left:auto;right:5px}
+ .app:has(.drawer.expanded) .map-layers{top:57px;bottom:auto;left:10px;right:55px}
+ .toast{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:390px){.brand{font-size:12px}.nav-tab{font-size:9px}.drawer-header .subheading{max-width:220px}.map-chip{max-width:190px}}
