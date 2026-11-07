@@ -155,7 +155,7 @@ function enableMapLayer(){
     if(dx< -world/2)dx+=world;
     const dy=old.y-now.y;
     layer.style.transform=`translate3d(${Math.round(dx)}px,${Math.round(dy)}px,0)`;
-    layer.hidden=Math.abs(dx)>map.clientWidth||Math.abs(dy)>map.clientHeight;
+    layer.hidden=Math.abs(dx)>loadedFrame.padX||Math.abs(dy)>loadedFrame.padY;
   }
   function sync(){
     if(!enabled)return;
@@ -164,20 +164,34 @@ function enableMapLayer(){
       disable();status.textContent='Ab Zoom 14 zu grob: Tiefenprofil am Spot verwenden.';
       return;
     }
-    // Hide a stale snapshot immediately if the zoom level changed.
+    // Preserve the previously loaded WMS image across small map movements.
     follow();
-    const bbox=api()?.visibleBBox?.();
+    if(!st)return;
+    const width=Math.round(map.clientWidth),height=Math.round(map.clientHeight);
+    if(width<1||height<1)return;
+    const padX=Math.round(width/2),padY=Math.round(height/2);
+    const a=api();
+    if(loadedFrame&&loadedFrame.zoom===st.zoom&&loadedFrame.width===map.clientWidth&&loadedFrame.height===map.clientHeight){
+      const old=a.project(loadedFrame.lat,loadedFrame.lon,st.zoom),now=a.project(st.lat,st.lon,st.zoom),world=256*2**st.zoom;
+      let dx=old.x-now.x;
+      if(dx>world/2)dx-=world;
+      if(dx< -world/2)dx+=world;
+      if(Math.abs(dx)<loadedFrame.padX*.6&&Math.abs(old.y-now.y)<loadedFrame.padY*.6)return;
+    }
+    const bbox=a?.overlayBounds?.(padX,padY);
     if(!bbox)return;
-    let url;try{url=habitatUrl(bbox,map.clientWidth,map.clientHeight);}
+    let url;try{url=habitatUrl(bbox,width+2*padX,height+2*padY);}
     catch{layer.hidden=true;status.textContent='Kartenbereich ungültig';return;}
     if(url===lastUrl){follow();return;}
     lastUrl=url;const version=++requestId;
-    const frame={lat:st.lat,lon:st.lon,zoom:st.zoom,width:map.clientWidth,height:map.clientHeight};
+    const frame={lat:st.lat,lon:st.lon,zoom:st.zoom,width:map.clientWidth,height:map.clientHeight,padX,padY};
     status.textContent='EUSeaMap-Modell wird geladen …';
     const preload=new Image();
     preload.onload=()=>{
       if(!enabled||version!==requestId)return;
       preload.className='habitat-wms';preload.alt='';preload.draggable=false;preload.hidden=true;
+      preload.style.width=(width+2*padX)+'px';preload.style.height=(height+2*padY)+'px';
+      preload.style.left=-padX+'px';preload.style.top=-padY+'px';preload.style.right='auto';preload.style.bottom='auto';
       layer.replaceWith(preload);layer=preload;loadedFrame=frame;follow();
       status.textContent='EUSeaMap 2025 · grobes Lebensraum-Modell, keine Spotmessung';
     };
