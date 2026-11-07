@@ -26,6 +26,8 @@ function project(lat,lon,z){const sin=Math.sin(toRad(clamp(lat,-85.05,85.05))),s
 function unproject(x,y,z){const scale=TILE*2**z;return {lat:Math.atan(Math.sinh(Math.PI*(1-2*y/scale)))*180/Math.PI,lon:mod(x/scale*360,360)-180};}
 function coordForPixel(x,y){const c=project(state.lat,state.lon,state.zoom),w=map.clientWidth,h=map.clientHeight;return unproject(c.x+x-w/2,c.y+y-h/2,state.zoom);}
 function visibleBBox(){const a=coordForPixel(0,map.clientHeight),b=coordForPixel(map.clientWidth,0);return {s:Math.min(a.lat,b.lat),w:a.lon,n:Math.max(a.lat,b.lat),e:b.lon};}
+// Extend WMS bounds beyond the viewport so small pans do not expose empty strips.
+function overlayBounds(padX,padY){const a=coordForPixel(-padX,map.clientHeight+padY),b=coordForPixel(map.clientWidth+padX,-padY);return {s:Math.min(a.lat,b.lat),w:a.lon,n:Math.max(a.lat,b.lat),e:b.lon};}
 function normalizedLon(lon){return mod(lon+180,360)-180;}
 function setCenter(lat,lon){state.lat=clamp(lat,-85.04,85.04);state.lon=normalizedLon(lon);renderMap();mapMotion();updateBathy();}
 function zoomTo(z,position){const next=clamp(Math.round(z),MIN_ZOOM,MAX_ZOOM);if(next===state.zoom)return;let pivot=null;if(position){pivot=coordForPixel(position.x,position.y);}state.zoom=next;if(pivot){const p=project(pivot.lat,pivot.lon,next),w=map.clientWidth,h=map.clientHeight;const centerX=p.x-(position.x-w/2),centerY=p.y-(position.y-h/2),c=unproject(centerX,centerY,next);state.lat=clamp(c.lat,-85.04,85.04);state.lon=normalizedLon(c.lon);}renderMap();updateBathy();window.dispatchEvent(new Event('coastfinder:mapchange'));}
@@ -54,7 +56,7 @@ function positionBathy(){
   if(dx< -world/2)dx+=world;
   const dy=origin.y-current.y;
   bathy.style.transform=`translate3d(${Math.round(dx)}px,${Math.round(dy)}px,0)`;
-  bathy.hidden=Math.abs(dx)>map.clientWidth||Math.abs(dy)>map.clientHeight;
+  bathy.hidden=Math.abs(dx)>bathyFrame.padX||Math.abs(dy)>bathyFrame.padY;
 }
 function updateBathy(){
   if(!state.bathy)return;
@@ -69,19 +71,31 @@ function updateBathy(){
   positionBathy();
   const width=Math.round(map.clientWidth),height=Math.round(map.clientHeight);
   if(width<1||height<1)return;
-  const b=visibleBBox();if(b.w>b.e){bathy.hidden=true;return;}
+  const padX=Math.round(width/2),padY=Math.round(height/2);
+  // Keep the loaded image until most of its margin is used; avoid a WMS
+  // request for every slight pan (including on touchscreens).
+  if(bathyFrame&&bathyFrame.zoom===state.zoom&&bathyFrame.width===map.clientWidth&&bathyFrame.height===map.clientHeight){
+    const old=project(bathyFrame.lat,bathyFrame.lon,state.zoom),current=project(state.lat,state.lon,state.zoom),world=TILE*2**state.zoom;
+    let dx=old.x-current.x;
+    if(dx>world/2)dx-=world;
+    if(dx< -world/2)dx+=world;
+    if(Math.abs(dx)<bathyFrame.padX*.6&&Math.abs(old.y-current.y)<bathyFrame.padY*.6){positionBathy();return;}
+  }
+  const b=overlayBounds(padX,padY);if(b.w>=b.e){bathy.hidden=true;return;}
   const merc=(lat,lon)=>{const p=project(lat,lon,0);return {x:(p.x/256-.5)*40075016.68557849,y:(.5-p.y/256)*40075016.68557849};};
   const sw=merc(b.s,b.w),ne=merc(b.n,b.e);
-  const params=new URLSearchParams({service:'WMS',version:'1.1.1',request:'GetMap',layers:'emodnet:mean_multicolour',styles:'',format:'image/png',transparent:'true',srs:'EPSG:3857',bbox:[sw.x,sw.y,ne.x,ne.y].join(','),width:String(Math.min(width,1800)),height:String(Math.min(height,1400))});
+  const params=new URLSearchParams({service:'WMS',version:'1.1.1',request:'GetMap',layers:'emodnet:mean_multicolour',styles:'',format:'image/png',transparent:'true',srs:'EPSG:3857',bbox:[sw.x,sw.y,ne.x,ne.y].join(','),width:String(Math.min(width+2*padX,1800)),height:String(Math.min(height+2*padY,1400))});
   const url='https://ows.emodnet-bathymetry.eu/wms?'+params;
   if(url===bathyLastUrl){positionBathy();return;}
   const version=++bathyRequest;
   bathyLastUrl=url;
-  const frame={lat:state.lat,lon:state.lon,zoom:state.zoom,width:map.clientWidth,height:map.clientHeight};
+  const frame={lat:state.lat,lon:state.lon,zoom:state.zoom,width:map.clientWidth,height:map.clientHeight,padX,padY};
   const next=new Image();
   next.onload=()=>{
     if(version!==bathyRequest||!state.bathy)return;
     next.id='bathy';next.className='bathy';next.alt='';next.draggable=false;next.hidden=true;
+    next.style.width=(width+2*padX)+'px';next.style.height=(height+2*padY)+'px';
+    next.style.left=-padX+'px';next.style.top=-padY+'px';next.style.right='auto';next.style.bottom='auto';
     bathy.replaceWith(next);bathy=next;bathyFrame=frame;positionBathy();
   };
   next.onerror=()=>{
@@ -150,5 +164,5 @@ window.addEventListener('resize',()=>{requestRender();updateBathy();window.dispa
 window.addEventListener('online',()=>{tileErrorShown=false;$('online-status').textContent='KARTE LÄDT';for(const key of [...failedTiles]){const img=tileCache.get(key);if(img)img.src=`https://tile.openstreetmap.org/${key}.png`;}});
 window.addEventListener('offline',()=>{$('online-status').textContent='OFFLINE';notify('Offline: neue Kartendaten nicht verfügbar.');});
 // Minimal test surface for deterministic browser-based checks, not used by the UI.
-window.__COASTFINDER_TEST__={parseOSM,queryOSM,evaluate,project,unproject,visibleBBox,getState:()=>state};
+window.__COASTFINDER_TEST__={parseOSM,queryOSM,evaluate,project,unproject,visibleBBox,overlayBounds,getState:()=>state};
 updateControls();buildFilters();renderContent();requestAnimationFrame(renderMap);
