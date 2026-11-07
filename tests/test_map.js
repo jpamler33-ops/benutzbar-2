@@ -76,6 +76,9 @@ for(const lat of [-75,-45,0,44.87,75]){
   }
 }
 const viewport=api.visibleBBox();
+const bounds=api.overlayBounds(Math.round(map.clientWidth/2),Math.round(map.clientHeight/2));
+assert(bounds.s<viewport.s&&bounds.n>viewport.n&&bounds.w<viewport.w&&bounds.e>viewport.e,
+  'WMS overscan must cover all four viewport edges');
 assert(viewport.w<state.lon&&viewport.e>state.lon,'Map visible longitude extent must contain center');
 assert(viewport.s<state.lat&&viewport.n>state.lat,'Map visible latitude extent must contain center');
 const originalZoom=state.zoom;
