@@ -41,3 +41,10 @@ jobs:
         run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
       - name: Ten real WebKit engine iPhone-sized mobile browser cycles
         run: node tests/webkit_mobile_10x.js
+      - name: Keep BLACKTIDE mobile visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blacktide-webkit-layouts
+          path: qa-screenshots/blacktide-webkit-*.png
+          if-no-files-found: ignore

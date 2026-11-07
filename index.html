@@ -5,12 +5,12 @@
 <meta name="description" content="COASTFINDER — entdecke Küstenstrukturen und potenzielle Angelstellen mit echten Kartendaten in Frankreich und Kroatien.">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="COASTFINDER"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>COASTFINDER · Küsten-Angelspots entdecken</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-180.png"><link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-180.png"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="blacktide.css">
 </head>
 <body>
 <div class="app">
  <header class="topbar">
-  <div class="logo"><div class="logo-mark">⌖</div><div><div class="brand">COAST<span>FINDER</span></div><div class="brand-sub">COASTAL INTELLIGENCE <i></i> FREE</div></div></div>
+  <div class="logo"><div class="logo-mark">⌖</div><div><div class="brand">COAST<span>FINDER</span></div><div class="brand-sub">KÜSTE · DATEN · ENTSCHEIDUNG</div></div></div>
   <div class="top-actions"><span class="online-status" id="online-status"><span class="status-dot"></span>KARTE LÄDT</span><button id="help-btn" class="round-button" title="Hinweise">ⓘ</button></div>
  </header>
  <div class="regions-bar"><div class="regions-label">REGION</div><div id="region-tabs" class="region-tabs"></div></div>
@@ -35,8 +35,8 @@
  <section class="drawer" id="drawer" aria-label="Ergebnisse und Spot-Details">
   <div class="drawer-grab" id="drawer-grab" role="button" tabindex="0" aria-label="Ergebnisfenster erweitern"><span></span></div>
   <div class="drawer-header">
-   <div><div class="eyebrow">GEO-DISCOVERY ENGINE <span class="dot-mini">●</span> V1</div><h1 id="panel-heading">Küsten entdecken</h1><p class="subheading" id="panel-subheading">Echte Küstenstrukturen statt erfundener Hotspots</p></div>
-   <div class="count-box"><strong id="result-count">—</strong><small>SPOTS</small></div>
+   <div><div class="eyebrow">COASTFINDER / FELDANSICHT</div><h1 id="panel-heading">Küsten entdecken</h1><p class="subheading" id="panel-subheading">Echte Küstenstrukturen statt erfundener Hotspots</p></div>
+   <div class="count-box"><strong id="result-count">—</strong><small>ORTE</small></div>
   </div>
   <div class="drawer-content" id="drawer-content">
    <div class="discover-panel" id="discover-panel">
@@ -52,7 +52,7 @@
    <div id="catches-panel" hidden></div>
    <div id="detail-panel" hidden></div>
   </div>
-  <nav class="bottom-nav" aria-label="Hauptnavigation"><button data-tab="discover" class="nav-tab selected"><span>⌖</span> Entdecken</button><button data-tab="angeln" class="nav-tab"><span>◉</span> Angeln</button><button data-tab="favorites" class="nav-tab"><span>♡</span> Favoriten</button><button data-tab="forum" class="nav-tab"><span>◈</span> Foren</button><button data-tab="catches" class="nav-tab"><span>◉</span> Fänge</button><button data-tab="rules" class="nav-tab"><span>☷</span> Regeln</button></nav>
+  <nav class="bottom-nav" aria-label="Hauptnavigation"><button data-tab="discover" class="nav-tab selected"><span>⌖</span> Karte</button><button data-tab="angeln" class="nav-tab"><span>◷</span> Plan</button><button data-tab="favorites" class="nav-tab"><span>♡</span> Orte</button><button data-tab="forum" class="nav-tab"><span>≋</span> Radar</button><button data-tab="catches" class="nav-tab"><span>▤</span> Logbuch</button><button data-tab="rules" class="nav-tab"><span>ⓘ</span> Regeln</button></nav>
  </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

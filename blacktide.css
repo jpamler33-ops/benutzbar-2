@@ -1,0 +1,37 @@
+/* BLACKTIDE: chartroom typography, functional contrast, quiet marine surfaces. */
+:root{--bg:#101b21;--panel:#14242b;--panel2:#1b3037;--line:#38545a;--muted:#abc1c4;--text:#f2f2e8;--aqua:#95c7b7;--ice:#d2e4d9;--gold:#dcc18b;--alert:#e8b19a;color-scheme:dark}
+html,body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg)}
+.app{background:var(--bg);grid-template-columns:minmax(0,1fr) minmax(340px,380px);grid-template-rows:68px 48px minmax(0,1fr)}
+.topbar{background:#101b21;border-color:#345057;padding:0 23px}
+.logo-mark{border:1px solid #819f96;background:transparent;color:#c7dfd3;border-radius:2px;width:38px;height:38px;font-size:27px}
+.brand{font-size:15px;font-weight:770;letter-spacing:.17em}.brand span{color:#b7d2c4;font-weight:420}
+.brand-sub{font-size:9px;letter-spacing:.17em;color:#a4bab9}
+.online-status{color:#d6e6de}.status-dot,.chip-pulse{background:#a2c8af;box-shadow:none}
+.round-button{border-radius:3px;background:#20323a;color:#f1f1e9;min-width:42px;min-height:42px}
+.regions-bar{background:#17272e;border-color:#355259;padding:0 23px;gap:18px}
+.regions-label,.eyebrow,.filter-title,.zoom-indicator{letter-spacing:.13em;color:#a9c5c4}
+.region-tab{border-radius:3px;background:#1b3038;border-color:#3d5960;color:#d0dfdd;padding:7px 11px}
+.region-tab.active{background:#d6e4d6;color:#10282b;border-color:#d6e4d6}.region-tab.active .flag{background:#bdcfc3;color:#163239}
+.flag{background:#2c4650;color:#d1e2dc;border-radius:2px}
+.stage{background:#a2bdc0}.map{background:#9ebdc4}.tile.marine{filter:saturate(.78) contrast(1.04)}
+.map-chip,.zoom-indicator{border-radius:2px;background:#14272def;color:#f3f3eb;box-shadow:none}
+.map-chip{border:1px solid #75969b;padding:9px 11px}.map-tool-stack{border-radius:3px;background:#152a31f2;border-color:#62818a;box-shadow:0 2px 8px #15232b55}
+.map-btn{min-width:44px;min-height:44px;border-color:#44616a}.map-btn.active{background:#426c62;color:#fff}
+.layer-btn,.map-layers .layer-btn{min-height:44px;border-radius:3px;background:#142a32f2;border-color:#69878b;color:#f6f4ec;box-shadow:0 2px 8px #15232b55}
+.layer-icon{color:#bad9ca}.switch{background:#536b70}.layer-btn[aria-pressed=true] .switch{background:#729f87}
+.drawer{background:#17272e;border-color:#47616a;box-shadow:none}.drawer-header{border-color:#425b60;padding:21px 20px 17px}
+.eyebrow{color:#c2d9c9;font-size:9px}h1{font-size:24px;letter-spacing:-.035em;font-weight:660}.subheading{font-size:12px;color:#bdcdce}
+.count-box{border-radius:2px;background:#20353d;border-color:#4c6970}.count-box strong{color:#e6f1dc}
+.drawer-content{scrollbar-color:#557078 transparent}.cta-block{padding:17px 18px}.analyze-button{background:#d8e6d6;border:1px solid #e6e9d9;border-radius:3px;color:#163139;box-shadow:none;letter-spacing:.08em}
+.analyze-button:hover{background:#edf0de;filter:none}.cta-hint{font-size:12px;color:#b4cacb}
+.explorer-toggle,.filter-pill{border-radius:3px;background:#1c333b;color:#d1dcda;border-color:#4a6870;min-height:34px}.filter-pill.active,.explorer-toggle.active{background:#a8cdbb;color:#102a2d;border-color:#bbddc8}
+.spot-card,.info-card,.intel-box,.geo-intel,.angler-intro,.angler-spot,.angler-section,.catch-form-card,.catch-entry,.catch-stat,.intel-source{border-radius:3px;background:#1e333b;border-color:#42616a;box-shadow:none}
+.spot-card:hover,.spot-card.active{background:#29444a;border-color:#a4cbbc}.spot-icon,.empty-icon{border-radius:3px;background:#334d51;color:#d6e8d9}.score,.coord{color:#d5e8d4}
+.bottom-nav{background:#101f26;border-color:#4b676d;height:68px;min-height:68px}.nav-tab{color:#b3c8c8;font-size:10px;gap:4px;border-top:3px solid transparent}.nav-tab.selected{color:#e9efdc;background:#20373a;border-top-color:#b0d4bd}.nav-tab span{font-size:19px}
+.section-body p,.section-body li{color:#c8d9d8}.section-body h2{font-weight:650}.small-muted{color:#b7cacb!important}
+.intel-action,.catch-action{background:#d8e6d6;color:#143237;border-radius:3px}.intel-box,.geo-intel{background:#1b333a}.intel-stat,.geo-metrics>div,.intel-load-card,.intel-season,.intel-windows,.intel-source{background:#1b3038;border-color:#456269;border-radius:3px}.intel-day,.intel-hour{background:#203840;border-color:#506d73;border-radius:3px;color:#e1e8df;min-height:44px}.intel-day.active,.intel-hour.active{background:#d5e6d6;color:#142f33;border-color:#e0ebd9}
+.intel-timezone,.intel-selected-time{font-size:11px;color:#c7d9d2;line-height:1.5;margin:10px 0}.intel-selected-time{font-weight:700;letter-spacing:.04em}
+.spot-evidence{background:#22383e;border-left:3px solid #b9d4b6;padding:12px;margin:13px 0}.spot-evidence h3{margin:0 0 9px;font-size:13px}.spot-evidence p{font-size:11px;line-height:1.55;margin:7px 0;color:#d6e1da}.spot-evidence b{color:#d5e6c8;margin-right:5px;font-size:10px;letter-spacing:.07em}
+.map-banner,.toast{border-radius:3px;background:#19343d;color:#f3f2e9}.drawer-grab span{background:#8eabb0}
+@media(max-width:900px){.app{grid-template-columns:1fr;grid-template-rows:56px 48px minmax(0,1fr)}.topbar{padding:0 12px}.regions-bar{padding:0 9px;gap:8px}.regions-label{display:none}.region-tab{min-height:38px}.stage{grid-row:3}.drawer{height:236px;border-radius:9px 9px 0 0;border-left:0;border-right:0;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 12px #10242a77}.drawer.expanded{height:min(76dvh,710px,calc(100dvh - 245px))}.drawer-header{padding:2px 15px 9px}.drawer-header h1{font-size:18px;margin:4px 0}.drawer-header .subheading{font-size:11px}.drawer-grab{height:20px;min-height:20px}.cta-block{padding:10px 14px}.analyze-button{height:44px}.cta-hint{font-size:11px}.bottom-nav{height:61px;min-height:61px}.nav-tab{font-size:9px}.map-layers{bottom:calc(249px + env(safe-area-inset-bottom,0px));left:9px}.map-layers .layer-btn{min-height:42px;padding:6px 9px}.map-attribution{bottom:calc(244px + env(safe-area-inset-bottom,0px))}.map-tool-stack{right:9px;top:9px}.map-top-left{left:9px;top:9px}.app:has(.drawer.expanded) .map-layers{top:51px;bottom:auto;left:9px;right:54px}.app:has(.drawer.expanded) .map-attribution{top:103px;bottom:auto}.drawer:not(.expanded) .spot-list,.drawer:not(.expanded) .filter-title,.drawer:not(.expanded) .filters{display:none}}
+@media(max-width:380px){.brand{font-size:13px}.brand-sub{font-size:8px}.round-button{min-width:40px}.map-chip{max-width:205px}.bottom-nav .nav-tab{font-size:8px}}

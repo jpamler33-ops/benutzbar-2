@@ -9,7 +9,7 @@
 'use strict';
 const WEATHER='https://api.open-meteo.com/v1/forecast';
 const MARINE='https://marine-api.open-meteo.com/v1/marine';
-const W_VARS=['wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m'];
+const W_VARS=['wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m','precipitation'];
 const M_VARS=['wave_height','wave_direction','wave_period','swell_wave_height','sea_surface_temperature','ocean_current_velocity','ocean_current_direction','sea_level_height_msl'];
 const cache=new Map(), CACHE_MS=30*60*1000;
 function num(x){return typeof x==='number'&&Number.isFinite(x)?x:null;}
@@ -60,7 +60,7 @@ function joinHours(w,m){
   const read=(obj,key,index)=>index===undefined?null:num(obj?.hourly?.[key]?.[index]);
   return times.map(time=>{
     const wi=wm.get(time),mi=mm.get(time);
-    const h={time,wind:read(w,'wind_speed_10m',wi),windFrom:read(w,'wind_direction_10m',wi),gust:read(w,'wind_gusts_10m',wi),airTemp:read(w,'temperature_2m',wi),wave:read(m,'wave_height',mi),waveFrom:read(m,'wave_direction',mi),wavePeriod:read(m,'wave_period',mi),swell:read(m,'swell_wave_height',mi),sst:read(m,'sea_surface_temperature',mi),current:read(m,'ocean_current_velocity',mi),currentTo:read(m,'ocean_current_direction',mi),seaLevel:read(m,'sea_level_height_msl',mi)};
+    const h={time,wind:read(w,'wind_speed_10m',wi),windFrom:read(w,'wind_direction_10m',wi),gust:read(w,'wind_gusts_10m',wi),precipitation:read(w,'precipitation',wi),airTemp:read(w,'temperature_2m',wi),wave:read(m,'wave_height',mi),waveFrom:read(m,'wave_direction',mi),wavePeriod:read(m,'wave_period',mi),swell:read(m,'swell_wave_height',mi),sst:read(m,'sea_surface_temperature',mi),current:read(m,'ocean_current_velocity',mi),currentTo:read(m,'ocean_current_direction',mi),seaLevel:read(m,'sea_level_height_msl',mi)};
     h.assessment=assess(h);return h;
   });
 }
@@ -97,9 +97,15 @@ function dayGroups(hours,now=new Date()){
   return [...o].map(([day,records])=>({day,records}));
 }
 // Relative model-load windows, not advice to enter a coast or prediction of fish activity.
-function relativeWindows(hours,now=new Date(),maxResults=3){
+function localHour(now,country='HR'){
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:country==='FR'?'Europe/Paris':'Europe/Zagreb',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(now);
+  const part=type=>parts.find(p=>p.type===type)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:00`;
+}
+function relativeWindows(hours,now=new Date(),maxResults=3,country='HR'){
+  const local=localHour(now,country);
   const future=hours.filter(h=>{
-    const at=new Date(h.time);return Number.isFinite(at.getTime())&&at.getTime()>=now.getTime()&&h.assessment?.burden!==null;
+    return /^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(h.time)&&h.time>=local&&h.assessment?.burden!==null;
   });
   const perWindow=new Map();
   for(const h of future){
@@ -136,5 +142,5 @@ function searchLinks(region){const country=region?.country==='FR'?'FR':'HR';cons
   {name:country==='HR'?'Adria-Forum':'Französische Angelforen',url:'https://www.google.com/search?q='+encodeURIComponent(q+(country==='HR'?' site:morski-ribolov.net':' site:forum.gobages.com OR site:achigan.net'))},
 ];return data;
 }
-return {urls,load,joinHours,assess,season,diff,dayGroups,SOURCES,searchLinks,num,relativeWindows,regionalClues};
+return {urls,load,joinHours,assess,season,diff,dayGroups,SOURCES,searchLinks,num,relativeWindows,regionalClues,localHour};
 });

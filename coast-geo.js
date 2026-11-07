@@ -73,7 +73,10 @@ function projectedBounds(bounds){
 }
 function habitatUrl(bounds,width,height){
   const url=new URL(HABITAT_ENDPOINT);
-  const q={service:'WMS',version:'1.3.0',request:'GetMap',layers:HABITAT_LAYER,styles:'',format:'image/png',transparent:'true',crs:'EPSG:4326',bbox:projectedBounds(bounds),width:String(Math.min(512,Math.max(128,Math.round(width)))),height:String(Math.min(512,Math.max(128,Math.round(height))))};
+  if(!isNumber(width)||!isNumber(height)||width<=0||height<=0)throw Error('Rastergröße ungültig');
+  // Scale both dimensions together; independent 512px clamps distorted the map.
+  const scale=Math.min(1,512/width,512/height);
+  const q={service:'WMS',version:'1.3.0',request:'GetMap',layers:HABITAT_LAYER,styles:'',format:'image/png',transparent:'true',crs:'EPSG:4326',bbox:projectedBounds(bounds),width:String(Math.max(1,Math.round(width*scale))),height:String(Math.max(1,Math.round(height*scale)))};
   Object.entries(q).forEach(([k,v])=>url.searchParams.set(k,v));
   return url.toString();
 }
@@ -136,10 +139,10 @@ function enableMapLayer(){
   const btn=document.createElement('button');btn.type='button';btn.id='habitat-btn';btn.className='layer-btn';btn.setAttribute('aria-pressed','false');btn.innerHTML='<span class="layer-icon">≋</span> Lebensräume <span class="switch"></span>';
   const status=document.createElement('span');status.className='geo-layer-status';status.setAttribute('aria-live','polite');
   parent.append(btn,status);
-  let enabled=false,lastUrl='',loadedFrame=null,requestId=0;
+  let enabled=false,lastUrl='',loadedFrame=null,pendingFrame=null,requestId=0;
   const api=()=>root.__COASTFINDER_TEST__;
   const disable=()=>{
-    enabled=false;requestId++;loadedFrame=null;lastUrl='';
+    enabled=false;requestId++;loadedFrame=null;pendingFrame=null;lastUrl='';
     layer.hidden=true;layer.removeAttribute('src');layer.style.transform='';
     status.textContent='';btn.setAttribute('aria-pressed','false');
   };
@@ -178,13 +181,20 @@ function enableMapLayer(){
       if(dx< -world/2)dx+=world;
       if(Math.abs(dx)<loadedFrame.padX*.6&&Math.abs(old.y-now.y)<loadedFrame.padY*.6)return;
     }
+    if(pendingFrame&&pendingFrame.zoom===st.zoom&&pendingFrame.width===map.clientWidth&&pendingFrame.height===map.clientHeight){
+      const old=a.project(pendingFrame.lat,pendingFrame.lon,st.zoom),now=a.project(st.lat,st.lon,st.zoom),world=256*2**st.zoom;
+      let dx=old.x-now.x;if(dx>world/2)dx-=world;if(dx< -world/2)dx+=world;
+      if(Math.abs(dx)<pendingFrame.padX*.6&&Math.abs(old.y-now.y)<pendingFrame.padY*.6)return;
+    }
     const bbox=a?.overlayBounds?.(padX,padY);
     if(!bbox)return;
-    let url;try{url=habitatUrl(bbox,width+2*padX,height+2*padY);}
+    const size=a.rasterSize(width+2*padX,height+2*padY);
+    let url;try{url=habitatUrl(bbox,size.width,size.height);}
     catch{layer.hidden=true;status.textContent='Kartenbereich ungültig';return;}
     if(url===lastUrl){follow();return;}
     lastUrl=url;const version=++requestId;
     const frame={lat:st.lat,lon:st.lon,zoom:st.zoom,width:map.clientWidth,height:map.clientHeight,padX,padY};
+    pendingFrame=frame;
     status.textContent='EUSeaMap-Modell wird geladen …';
     const preload=new Image();
     preload.onload=()=>{
@@ -192,12 +202,12 @@ function enableMapLayer(){
       preload.className='habitat-wms';preload.alt='';preload.draggable=false;preload.hidden=true;
       preload.style.width=(width+2*padX)+'px';preload.style.height=(height+2*padY)+'px';
       preload.style.left=-padX+'px';preload.style.top=-padY+'px';preload.style.right='auto';preload.style.bottom='auto';
-      layer.replaceWith(preload);layer=preload;loadedFrame=frame;follow();
+      layer.replaceWith(preload);layer=preload;loadedFrame=frame;pendingFrame=null;follow();
       status.textContent='EUSeaMap 2025 · grobes Lebensraum-Modell, keine Spotmessung';
     };
     preload.onerror=()=>{
       if(!enabled||version!==requestId)return;
-      lastUrl='';follow();status.textContent='Lebensraumkarte nicht verfügbar';
+      lastUrl='';pendingFrame=null;follow();status.textContent='Lebensraumkarte nicht verfügbar';
     };
     preload.src=url;
   }

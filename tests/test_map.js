@@ -64,6 +64,9 @@ assert.match(el('map-banner').textContent,/Kartenkacheln/);
 assert.equal(el('map-banner').hidden,false);
 const api=env.__COASTFINDER_TEST__;
 const state=api.getState();
+const largeRaster=api.rasterSize(1962,1612);
+assert(largeRaster.width<=1800&&largeRaster.height<=1400,'WMS pixel limits');
+assert(Math.abs(largeRaster.width/largeRaster.height-1962/1612)<.001,'WMS raster must retain the geographic aspect ratio');
 // Regression: the previous inverse projection was off by 180 degrees.
 // Check distinct hemispheres, the antimeridian, and different tile scales.
 for(const lat of [-75,-45,0,44.87,75]){
@@ -93,6 +96,15 @@ map.fire('pointermove',{pointerId:1,clientX:210,clientY:200});
 map.fire('pointerup',{pointerId:1,clientX:210,clientY:200});
 assert(state.lon<beforeLon,'Dragging right should pan map center WEST, not jump 180°');
 assert(Number.isFinite(state.lon)&&Number.isFinite(state.lat));
+// A remaining touch after a pinch must not start a new single-finger drag or save a pin.
+const beforePinch=state.lon;
+map.fire('pointerdown',{pointerId:2,target:fakeTarget,clientX:120,clientY:200});
+map.fire('pointerdown',{pointerId:3,target:fakeTarget,clientX:220,clientY:200});
+map.fire('pointerup',{pointerId:3,clientX:220,clientY:200,type:'pointerup'});
+map.fire('pointermove',{pointerId:2,clientX:145,clientY:200});
+assert.equal(state.lon,beforePinch,'Second finger release must not pan the map');
+map.fire('pointercancel',{pointerId:2,clientX:145,clientY:200,type:'pointercancel'});
+assert.equal(state.pins.length,0,'Cancelled pinch must not create a private pin');
 env.navigator.onLine=true;
 for(const cb of listeners.online||[])cb();
 assert.match(el('online-status').textContent,/KARTE LÄDT/);
