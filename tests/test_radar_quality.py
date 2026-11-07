@@ -118,7 +118,7 @@ class RadarQuality(unittest.TestCase):
         self.assertEqual([],rows[0]['regions'])
         self.assertEqual([],rows[0]['countries'])
         self.assertEqual(0,rows[0]['relevance'])
-        self.assertIn('Dentex',rows[0]['fish'])
+        self.assertEqual([],rows[0]['fish'])
         # A country of publication or a fish tag cannot become a proven catch location.
         self.assertEqual(1,len(update_free_feed.revalidate_previous(rows,[source])))
         with tempfile.TemporaryDirectory() as d:
@@ -205,11 +205,34 @@ class RadarQuality(unittest.TestCase):
         self.assertEqual(['split'],rows[0]['regions'])
         self.assertEqual(['HR'],rows[0]['countries'])
         self.assertGreater(rows[0]['relevance'],0)
-        self.assertIn('Dentex',rows[0]['fish'])  # Publisher category, not verified catch.
+        self.assertEqual([],rows[0]['fish'])  # Publisher category is not article evidence.
         previous={**rows[0], 'regions':[], 'countries':[], 'relevance':0}
         refreshed=update_free_feed.revalidate_previous([previous],[source])
         self.assertEqual(['split'],refreshed[0]['regions'])
         self.assertEqual(['HR'],refreshed[0]['countries'])
+        self.assertEqual([],refreshed[0]['fish'])
+
+
+    def test_fish_label_from_text_but_not_publisher_category(self):
+        source=next(s for s in radar.load_sources(ROOT/'scripts'/'sources.json')
+                    if s['id']=='naudici_shore')
+        def article(description):
+            xml=f'''<rss><channel><item>
+                <title>Eging s obale na Makarskoj rivijeri</title>
+                <link>https://naudici.com/evidence-fish/</link>
+                <description>{description}</description>
+                <category>Ribolov s obale</category><category>zubatac</category>
+                </item></channel></rss>'''.encode('utf-8')
+            return radar.parse_feed(xml,source)[0]
+        without=article('Ribolov s obale na moru')
+        self.assertEqual([],without['fish'])
+        with_text=article('Zubatac na obali, ribolov u moru')
+        self.assertEqual(['Dentex'],with_text['fish'])
+        stale={**without,'fish':['Dentex']}
+        refreshed=update_free_feed.revalidate_previous([stale],[source])
+        self.assertEqual(1,len(refreshed))
+        self.assertEqual([],refreshed[0]['fish'])
+        self.assertEqual(['Dentex'],update_free_feed.revalidate_previous([with_text],[source])[0]['fish'])
 
 
 if __name__ == '__main__':
