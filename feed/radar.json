@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-07T20:55:30.122596Z",
+  "updated_at": "2026-11-08T11:57:30.825549Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-07T20:55:13.426051Z",
+        "checked_at": "2026-11-08T11:57:22.824973Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,11 +25,11 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-07T20:55:14.592306Z",
-        "status": "error",
-        "fetched": 0,
+        "checked_at": "2026-11-08T11:57:24.712609Z",
+        "status": "ok",
+        "fetched": 20,
         "stored": 0,
-        "message": "URLError: <urlopen error [Errno 101] Network is unreachable>"
+        "message": ""
       }
     },
     {
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-07T20:55:26.701392Z",
+        "checked_at": "2026-11-08T11:57:26.025060Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,7 +64,7 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-07T20:55:27.933859Z",
+        "checked_at": "2026-11-08T11:57:27.884928Z",
         "status": "ok",
         "fetched": 10,
         "stored": 1,
@@ -80,8 +80,8 @@
       "title": "CAR NA NIZ OD PEDLJA",
       "excerpt": "Piše: Hrvoje KRNIĆ Evo ovako je to bilo toga dana gospodnjeg 14. listopada 2026. godine na Makarskoj rivijeri. Moj prijatelj Marko Bušić – Žuti zove me da odemo na prvi eging s obale. Dani uz obalu su još vrući, a more r",
       "published_at": "2026-11-01T04:00:34Z",
-      "first_seen": "2026-11-07T20:55:30.118187Z",
-      "last_seen": "2026-11-07T20:55:30.118187Z",
+      "first_seen": "2026-11-08T11:57:30.821304Z",
+      "last_seen": "2026-11-08T11:57:30.821304Z",
       "countries": [
         "HR"
       ],
