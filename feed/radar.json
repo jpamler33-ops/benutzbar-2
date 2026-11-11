@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-10T22:23:35.548199Z",
+  "updated_at": "2026-11-11T12:44:48.194254Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-10T22:23:27.668513Z",
+        "checked_at": "2026-11-11T12:44:43.371268Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-10T22:23:29.274941Z",
+        "checked_at": "2026-11-11T12:44:44.482085Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-10T22:23:30.697704Z",
+        "checked_at": "2026-11-11T12:44:45.467580Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,15 +64,34 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-10T22:23:32.653772Z",
+        "checked_at": "2026-11-11T12:44:46.834838Z",
         "status": "ok",
         "fetched": 10,
-        "stored": 0,
+        "stored": 1,
         "message": ""
       }
     }
   ],
   "articles": [
+    {
+      "id": "69b17694e807902a3ef2eb64",
+      "source_id": "naudici_shore",
+      "url": "https://naudici.com/s-obale-ulovio-tunu-od-103-kilograma",
+      "title": "S OBALE ULOVIO TUNU OD 103 KILOGRAMA",
+      "excerpt": "Piše: Dalibor LECIĆ Kao i obično, pred promjenu vremena najčešće se očekuje da riba počne da radi, pa se svi spremamo da to ispratimo. Tako sam i ja tog jutra poranio, oko 05:00 sati, kako bih uhvatio mamac. Uspio sam da",
+      "published_at": "2026-11-11T10:20:15Z",
+      "first_seen": "2026-11-11T12:44:48.188231Z",
+      "last_seen": "2026-11-11T12:44:48.188231Z",
+      "countries": [],
+      "regions": [],
+      "fish": [],
+      "themes": [
+        "Uferangeln"
+      ],
+      "publication_season": "Herbst",
+      "relevance": 0,
+      "evidence": "Erwähnung im Feed – nicht verifiziert"
+    },
     {
       "id": "0596ac901fef981aaa8c2023",
       "source_id": "naudici_shore",
