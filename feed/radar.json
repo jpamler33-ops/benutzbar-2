@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-13T13:09:39.726284Z",
+  "updated_at": "2026-11-13T22:39:57.333196Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-13T13:09:32.338938Z",
+        "checked_at": "2026-11-13T22:39:50.657618Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-13T13:09:33.733975Z",
+        "checked_at": "2026-11-13T22:39:52.084701Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-13T13:09:35.044658Z",
+        "checked_at": "2026-11-13T22:39:53.289753Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,7 +64,7 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-13T13:09:36.916339Z",
+        "checked_at": "2026-11-13T22:39:54.821137Z",
         "status": "ok",
         "fetched": 10,
         "stored": 1,
@@ -80,8 +80,8 @@
       "title": "S OBALE ULOVIO TUNU OD 103 KILOGRAMA",
       "excerpt": "Piše: Dalibor LECIĆ Kao i obično, pred promjenu vremena najčešće se očekuje da riba počne da radi, pa se svi spremamo da to ispratimo. Tako sam i ja tog jutra poranio, oko 05:00 sati, kako bih uhvatio mamac. Uspio sam da",
       "published_at": "2026-11-11T10:20:15Z",
-      "first_seen": "2026-11-13T13:09:39.714768Z",
-      "last_seen": "2026-11-13T13:09:39.714768Z",
+      "first_seen": "2026-11-13T22:39:57.137234Z",
+      "last_seen": "2026-11-13T22:39:57.137234Z",
       "countries": [],
       "regions": [],
       "fish": [],
