@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-19T23:36:19.169616Z",
+  "updated_at": "2026-11-20T14:03:50.913739Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-19T23:36:12.583815Z",
+        "checked_at": "2026-11-20T14:03:42.861915Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-19T23:36:14.322731Z",
+        "checked_at": "2026-11-20T14:03:44.696620Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-19T23:36:15.879479Z",
+        "checked_at": "2026-11-20T14:03:46.142451Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,11 +64,11 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-19T23:36:17.624871Z",
-        "status": "error",
-        "fetched": 0,
-        "stored": 0,
-        "message": "HTTPError: HTTP Error 415: Unsupported Media Type"
+        "checked_at": "2026-11-20T14:03:47.968894Z",
+        "status": "ok",
+        "fetched": 10,
+        "stored": 1,
+        "message": ""
       }
     }
   ],
@@ -80,8 +80,8 @@
       "title": "S OBALE ULOVIO TUNU OD 103 KILOGRAMA",
       "excerpt": "Piše: Dalibor LECIĆ Kao i obično, pred promjenu vremena najčešće se očekuje da riba počne da radi, pa se svi spremamo da to ispratimo. Tako sam i ja tog jutra poranio, oko 05:00 sati, kako bih uhvatio mamac. Uspio sam da",
       "published_at": "2026-11-11T10:20:15Z",
-      "first_seen": "2026-11-19T14:28:11.928001Z",
-      "last_seen": "2026-11-19T14:28:11.928001Z",
+      "first_seen": "2026-11-20T14:03:50.906553Z",
+      "last_seen": "2026-11-20T14:03:50.906553Z",
       "countries": [],
       "regions": [],
       "fish": [],
