@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-21T13:30:07.532144Z",
+  "updated_at": "2026-11-21T22:11:47.111574Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-21T13:30:00.588537Z",
+        "checked_at": "2026-11-21T22:11:42.249903Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-21T13:30:02.112333Z",
+        "checked_at": "2026-11-21T22:11:43.640521Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-21T13:30:03.390263Z",
+        "checked_at": "2026-11-21T22:11:44.600354Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,15 +64,34 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-21T13:30:04.864181Z",
+        "checked_at": "2026-11-21T22:11:45.921730Z",
         "status": "ok",
         "fetched": 10,
-        "stored": 1,
+        "stored": 2,
         "message": ""
       }
     }
   ],
   "articles": [
+    {
+      "id": "4804795044816d0a808538d8",
+      "source_id": "naudici_shore",
+      "url": "https://naudici.com/mali-ribar-venci",
+      "title": "MALI RIBAR VENCI",
+      "excerpt": "Iz Bibinja kraj Zadra nam se javila Marina Vučković Sikirić, mama osmogodišnjeg Vencija koji pokazuje iznimno veliko strpljenje i zanimanje za sve vezano uz ribolov i kužinavanje. Evo što smo saznali o tome: – Mama, ajde",
+      "published_at": "2026-11-21T15:01:44Z",
+      "first_seen": "2026-11-21T22:11:47.105227Z",
+      "last_seen": "2026-11-21T22:11:47.105227Z",
+      "countries": [],
+      "regions": [],
+      "fish": [],
+      "themes": [
+        "Uferangeln"
+      ],
+      "publication_season": "Herbst",
+      "relevance": 0,
+      "evidence": "Erwähnung im Feed – nicht verifiziert"
+    },
     {
       "id": "69b17694e807902a3ef2eb64",
       "source_id": "naudici_shore",
@@ -80,8 +99,8 @@
       "title": "S OBALE ULOVIO TUNU OD 103 KILOGRAMA",
       "excerpt": "Piše: Dalibor LECIĆ Kao i obično, pred promjenu vremena najčešće se očekuje da riba počne da radi, pa se svi spremamo da to ispratimo. Tako sam i ja tog jutra poranio, oko 05:00 sati, kako bih uhvatio mamac. Uspio sam da",
       "published_at": "2026-11-11T10:20:15Z",
-      "first_seen": "2026-11-21T13:30:07.524908Z",
-      "last_seen": "2026-11-21T13:30:07.524908Z",
+      "first_seen": "2026-11-21T22:11:47.105227Z",
+      "last_seen": "2026-11-21T22:11:47.105227Z",
       "countries": [],
       "regions": [],
       "fish": [],
