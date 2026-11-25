@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-24T15:55:20.454631Z",
+  "updated_at": "2026-11-25T01:26:59.008970Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-24T15:55:12.749627Z",
+        "checked_at": "2026-11-25T01:26:53.226045Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-24T15:55:14.343801Z",
+        "checked_at": "2026-11-25T01:26:54.939163Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-24T15:55:15.670454Z",
+        "checked_at": "2026-11-25T01:26:56.034215Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,7 +64,7 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-24T15:55:17.425801Z",
+        "checked_at": "2026-11-25T01:26:57.467891Z",
         "status": "ok",
         "fetched": 10,
         "stored": 2,
@@ -80,8 +80,8 @@
       "title": "MALI RIBAR VENCI",
       "excerpt": "Iz Bibinja kraj Zadra nam se javila Marina Vučković Sikirić, mama osmogodišnjeg Vencija koji pokazuje iznimno veliko strpljenje i zanimanje za sve vezano uz ribolov i kužinavanje. Evo što smo saznali o tome: – Mama, ajde",
       "published_at": "2026-11-21T15:01:44Z",
-      "first_seen": "2026-11-24T15:55:20.445154Z",
-      "last_seen": "2026-11-24T15:55:20.445154Z",
+      "first_seen": "2026-11-25T01:26:59.002849Z",
+      "last_seen": "2026-11-25T01:26:59.002849Z",
       "countries": [],
       "regions": [],
       "fish": [],
@@ -99,8 +99,8 @@
       "title": "S OBALE ULOVIO TUNU OD 103 KILOGRAMA",
       "excerpt": "Piše: Dalibor LECIĆ Kao i obično, pred promjenu vremena najčešće se očekuje da riba počne da radi, pa se svi spremamo da to ispratimo. Tako sam i ja tog jutra poranio, oko 05:00 sati, kako bih uhvatio mamac. Uspio sam da",
       "published_at": "2026-11-11T10:20:15Z",
-      "first_seen": "2026-11-24T15:55:20.445154Z",
-      "last_seen": "2026-11-24T15:55:20.445154Z",
+      "first_seen": "2026-11-25T01:26:59.002849Z",
+      "last_seen": "2026-11-25T01:26:59.002849Z",
       "countries": [],
       "regions": [],
       "fish": [],
