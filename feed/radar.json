@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-28T00:33:04.012572Z",
+  "updated_at": "2026-11-28T14:15:11.061883Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-28T00:33:00.533507Z",
+        "checked_at": "2026-11-28T14:15:05.603251Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-28T00:33:01.556758Z",
+        "checked_at": "2026-11-28T14:15:07.188731Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-28T00:33:02.450464Z",
+        "checked_at": "2026-11-28T14:15:08.429643Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,7 +64,7 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-28T00:33:03.538755Z",
+        "checked_at": "2026-11-28T14:15:09.918786Z",
         "status": "error",
         "fetched": 0,
         "stored": 0,
