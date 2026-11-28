@@ -1,6 +1,6 @@
 {
   "discarded_old_entries": 0,
-  "updated_at": "2026-11-27T15:08:49.462791Z",
+  "updated_at": "2026-11-28T00:33:04.012572Z",
   "sources": [
     {
       "id": "barsch_alarm",
@@ -10,7 +10,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-27T15:08:42.979537Z",
+        "checked_at": "2026-11-28T00:33:00.533507Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -25,7 +25,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-27T15:08:44.475485Z",
+        "checked_at": "2026-11-28T00:33:01.556758Z",
         "status": "ok",
         "fetched": 20,
         "stored": 0,
@@ -40,7 +40,7 @@
       "kind": "forum",
       "scope": "",
       "last_check": {
-        "checked_at": "2026-11-27T15:08:45.681821Z",
+        "checked_at": "2026-11-28T00:33:02.450464Z",
         "status": "ok",
         "fetched": 30,
         "stored": 0,
@@ -64,11 +64,11 @@
       "kind": "editorial",
       "scope": "Adria-Artikel – ohne bestätigten Regionsbezug keine Ortszuordnung",
       "last_check": {
-        "checked_at": "2026-11-27T15:08:47.134861Z",
-        "status": "ok",
-        "fetched": 10,
-        "stored": 2,
-        "message": ""
+        "checked_at": "2026-11-28T00:33:03.538755Z",
+        "status": "error",
+        "fetched": 0,
+        "stored": 0,
+        "message": "HTTPError: HTTP Error 415: Unsupported Media Type"
       }
     }
   ],
